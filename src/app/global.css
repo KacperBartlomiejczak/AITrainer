@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ----------------------------------------------------
+     * HEVY DARK THEME - DESIGN SYSTEM TOKENS
+     * ---------------------------------------------------- */
+
+    /* === BACKGROUND & SURFACES (OLED DARK) === */
+    --color-bg-app: #000000;              /* Pure OLED Black for main background */
+    --color-surface-card: #121214;        /* Card surface (workout rows, exercise logs) */
+    --color-surface-card-hover: #18181b;  /* Hover / active card state */
+    --color-surface-elevated: #1e1e22;    /* Elevated surface (modals, bottom sheets) */
+    --color-surface-highlight: #27272a;   /* Highlighted row / pressed state */
+    --color-surface-overlay: rgba(0, 0, 0, 0.75); /* Dimming modal backdrop */
+
+    /* === PRIMARY / HEVY ACCENT === */
+    --color-primary: #007aff;             /* Hevy signature electric blue */
+    --color-primary-hover: #258cff;       /* Light blue for hover / active states */
+    --color-primary-active: #0062cc;      /* Darker blue for active press */
+    --color-primary-muted: rgba(0, 122, 255, 0.15); /* 15% opacity blue for badge pills */
+    --color-primary-foreground: #ffffff;  /* Text on top of primary buttons */
+
+    /* === SEMANTIC WORKOUT SETS & STATUSES === */
+    --color-accent-pr: #22c55e;           /* Personal Record / completed set (emerald) */
+    --color-accent-pr-muted: rgba(34, 197, 94, 0.15);
+    --color-accent-warmup: #f59e0b;       /* Warm-up sets / RPE indicators (amber) */
+    --color-accent-warmup-muted: rgba(245, 158, 11, 0.15);
+    --color-accent-drop: #ef4444;         /* Drop sets / failure / destructive (crimson) */
+    --color-accent-drop-muted: rgba(239, 68, 68, 0.15);
+    --color-accent-rest: #8b5cf6;         /* Rest timer / volume stats (purple) */
+    --color-accent-rest-muted: rgba(139, 92, 246, 0.15);
+    --color-accent-cyan: #06b6d4;         /* Cardio / distance stats (cyan) */
+    --color-accent-cyan-muted: rgba(6, 182, 212, 0.15);
+
+    /* === TEXT & FOREGROUND HIERARCHY === */
+    --color-text-primary: #ffffff;        /* High contrast white (weights, reps, titles) */
+    --color-text-secondary: #a1a1aa;      /* Zinc-400 (subheadings, dates, muscle groups) */
+    --color-text-muted: #71717a;          /* Zinc-500 (units "kg", "lbs", timestamps) */
+    --color-text-disabled: #52525b;       /* Zinc-600 (disabled buttons/inputs) */
+    --color-text-inverse: #000000;        /* Text on light / colored badges */
+
+    /* === BORDERS & DIVIDERS === */
+    --color-border-subtle: #27272a;       /* Zinc-800 subtle table/set separators */
+    --color-border-medium: #3f3f46;       /* Zinc-700 default input borders */
+    --color-border-strong: #52525b;       /* Zinc-600 focused elements */
+    --color-border-focus: #007aff;        /* Active focus ring */
+    --color-border-error: #ef4444;        /* Input error state */
+
+    /* === SPACING SCALE (PADDING & MARGIN) === */
+    --space-none: 0px;
+    --space-3xs: 2px;
+    --space-2xs: 4px;
+    --space-xs: 6px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 20px;
+    --space-2xl: 24px;
+    --space-3xl: 32px;
+    --space-4xl: 40px;
+    --space-5xl: 48px;
+    --space-6xl: 64px;
+
+    /* === BORDER RADIUS SCALE === */
+    --radius-none: 0px;
+    --radius-xs: 4px;
+    --radius-sm: 6px;                     /* Small set tags, tiny badges */
+    --radius-md: 8px;                     /* Input fields, small buttons */
+    --radius-lg: 12px;                    /* Standard set rows, exercise cards */
+    --radius-xl: 16px;                    /* Workout summary cards, sheets */
+    --radius-2xl: 20px;                   /* Floating modal containers */
+    --radius-3xl: 24px;                   /* Large cards */
+    --radius-full: 9999px;                /* Pills, avatar circles, circular buttons */
+  }
+}
