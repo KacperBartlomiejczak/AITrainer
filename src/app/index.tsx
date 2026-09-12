@@ -11,6 +11,7 @@ import {
   QuickActionsGrid,
   RecentActivitySection,
 } from "@/components/home";
+import { PillNavbar } from "@/components/navigation";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -39,7 +40,7 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingTop: Math.max(insets.top, 16),
-          paddingBottom: Math.max(insets.bottom, 24) + 32,
+          paddingBottom: Math.max(insets.bottom, 24) + 80,
           paddingHorizontal: 16,
         }}
         showsVerticalScrollIndicator={false}
@@ -82,6 +83,9 @@ export default function HomeScreen() {
           <RecentActivitySection activity={data.recentActivity} />
         </View>
       </ScrollView>
+
+      {/* Floating Pill Navigation */}
+      <PillNavbar activeTab="home" />
     </View>
   );
 }

@@ -14,13 +14,16 @@ const MockStack = ({ children }) =>
 MockStack.displayName = "MockStack";
 MockStack.Screen = MockStackScreen;
 
+const mockRouter = {
+  push: jest.fn(),
+  replace: jest.fn(),
+  back: jest.fn(),
+};
+
 jest.mock("expo-router", () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    back: jest.fn(),
-  }),
+  useRouter: () => mockRouter,
   useSegments: () => [],
+  usePathname: jest.fn(() => "/"),
   useLocalSearchParams: () => ({}),
   Link: ({ children }) => children,
   Redirect: () => null,
