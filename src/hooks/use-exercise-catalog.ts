@@ -2,9 +2,11 @@ import { useState, useMemo, useCallback } from "react";
 import {
   type CatalogExercise,
   type ExerciseCategoryFilter,
+  type ExerciseEquipmentFilter,
   type ExerciseCatalogList,
   ExerciseCatalogListSchema,
 } from "@/schemas/exercise-catalog.schema";
+
 
 // ---------------------------------------------------------------------------
 // Full exercise catalog — 42 ćwiczenia pokrywające wszystkie partie mięśniowe
@@ -525,6 +527,20 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     imageFile: "images/0010-8K0w2yA.jpg",
     gifFile: "videos/0010-8K0w2yA.gif",
   },
+  {
+    id: "0517",
+    name: "Wiatrak z kettlebellem (Windmill)",
+    bodyPart: "waist",
+    category: "waist",
+    target: "Mięśnie skośne brzucha i stabilizacja",
+    equipment: "Kettlebell",
+    muscleGroup: "abs",
+    secondaryMuscles: ["obliques", "hamstrings", "shoulders"],
+    instructionsPl:
+      "Stań w szerokim rozkroku, trzymaj kettlebell nad głową na wyprostowanej ręce. Pochyl tułów w bok w kierunku przeciwległej stopy, stale patrząc na odważnik, a następnie wróć do pionu.",
+    imageFile: "images/0517-Kal9cQQ.jpg",
+    gifFile: "videos/0517-Kal9cQQ.gif",
+  },
 
   // ── CARDIO ────────────────────────────────────────────────────────────────
   {
@@ -558,11 +574,48 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
 ];
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+export function matchesEquipment(
+  exerciseEquipment: string,
+  filter: ExerciseEquipmentFilter
+): boolean {
+  if (filter === "all") return true;
+  const eq = exerciseEquipment.toLowerCase();
+  switch (filter) {
+    case "dumbbell":
+      return eq.includes("hant");
+    case "barbell":
+      return eq.includes("sztang");
+    case "bodyweight":
+      return (
+        eq.includes("własn") ||
+        eq.includes("drążek") ||
+        eq.includes("poręcz") ||
+        eq.includes("ławka") ||
+        eq.includes("body weight")
+      );
+    case "kettlebell":
+      return eq.includes("kettle");
+    case "machine":
+      return (
+        eq.includes("maszyn") || eq.includes("wyciąg") || eq.includes("cable")
+      );
+    case "band":
+      return eq.includes("taśm") || eq.includes("guma") || eq.includes("band");
+    default:
+      return true;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 export function useExerciseCatalog() {
   const [categoryFilter, setCategoryFilter] =
     useState<ExerciseCategoryFilter>("all");
+  const [equipmentFilter, setEquipmentFilter] =
+    useState<ExerciseEquipmentFilter>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedExercise, setSelectedExercise] =
     useState<CatalogExercise | null>(null);
@@ -581,6 +634,7 @@ export function useExerciseCatalog() {
     return validatedExercises.filter((item) => {
       const matchesCategory =
         categoryFilter === "all" || item.bodyPart === categoryFilter;
+      const matchesEq = matchesEquipment(item.equipment, equipmentFilter);
       const normalizedQuery = searchQuery.trim().toLowerCase();
       const matchesSearch =
         normalizedQuery.length === 0 ||
@@ -589,9 +643,9 @@ export function useExerciseCatalog() {
         item.equipment.toLowerCase().includes(normalizedQuery) ||
         item.muscleGroup.toLowerCase().includes(normalizedQuery);
 
-      return matchesCategory && matchesSearch;
+      return matchesCategory && matchesEq && matchesSearch;
     });
-  }, [categoryFilter, searchQuery, validatedExercises]);
+  }, [categoryFilter, equipmentFilter, searchQuery, validatedExercises]);
 
   /** Ćwiczenia pogrupowane po partii mięśniowej */
   const exercisesByMuscleGroup = useMemo(() => {
@@ -612,12 +666,32 @@ export function useExerciseCatalog() {
     setSelectedExercise(null);
   }, []);
 
+  const resetFilters = useCallback(() => {
+    setCategoryFilter("all");
+    setEquipmentFilter("all");
+    setSearchQuery("");
+  }, []);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (categoryFilter !== "all") count += 1;
+    if (equipmentFilter !== "all") count += 1;
+    return count;
+  }, [categoryFilter, equipmentFilter]);
+
+  const hasActiveFilters = activeFilterCount > 0;
+
   return {
     exercises: validatedExercises,
     filteredExercises,
     exercisesByMuscleGroup,
     categoryFilter,
     setCategoryFilter,
+    equipmentFilter,
+    setEquipmentFilter,
+    resetFilters,
+    activeFilterCount,
+    hasActiveFilters,
     searchQuery,
     setSearchQuery,
     selectedExercise,
@@ -625,3 +699,4 @@ export function useExerciseCatalog() {
     closePreview,
   };
 }
+

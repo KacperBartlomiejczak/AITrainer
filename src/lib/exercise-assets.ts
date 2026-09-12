@@ -132,6 +132,10 @@ export const EXERCISE_ASSET_MAP: Record<string, ExerciseMediaItem> = {
     gif: require("@/assets/videos/1022-tc5dYrf.gif"),
   },
   // ── WAIST ─────────────────────────────────────────────────
+  "0517": {
+    image: require("@/assets/images/0517-Kal9cQQ.jpg"),
+    gif: require("@/assets/videos/0517-Kal9cQQ.gif"),
+  },
   "0001": {
     image: require("@/assets/images/0001-2gPfomN.jpg"),
     gif: require("@/assets/videos/0001-2gPfomN.gif"),

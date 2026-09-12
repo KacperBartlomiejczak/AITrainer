@@ -6,12 +6,15 @@ import { ArrowLeft, LayoutList, Grid2x2 } from "lucide-react-native";
 import { useExerciseCatalog } from "@/hooks/use-exercise-catalog";
 import {
   ExerciseSearchBar,
-  ExerciseFilterChips,
   ExerciseCard,
   ExercisePreviewModal,
   ExerciseMuscleGroupSection,
+  ExerciseFilterButton,
+  ExerciseFilterModal,
 } from "@/components/exercises";
 import { cn } from "@/lib/utils";
+
+
 
 // Map body_part → Polish label + emoji
 const MUSCLE_GROUP_META: Record<
@@ -46,12 +49,17 @@ export default function ExercisesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const {
     filteredExercises,
     exercisesByMuscleGroup,
     categoryFilter,
     setCategoryFilter,
+    equipmentFilter,
+    setEquipmentFilter,
+    resetFilters,
+    activeFilterCount,
     searchQuery,
     setSearchQuery,
     selectedExercise,
@@ -62,6 +70,8 @@ export default function ExercisesScreen() {
   const sortedGroups = MUSCLE_GROUP_ORDER.filter(
     (key) => exercisesByMuscleGroup[key]?.length > 0
   );
+
+
 
   return (
     <View
@@ -113,14 +123,18 @@ export default function ExercisesScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <ExerciseSearchBar query={searchQuery} onChangeQuery={setSearchQuery} />
-
-        <ExerciseFilterChips
-          selectedCategory={categoryFilter}
-          onSelectCategory={setCategoryFilter}
-        />
+        <View className="flex-row items-center gap-2.5">
+          <View className="flex-1">
+            <ExerciseSearchBar query={searchQuery} onChangeQuery={setSearchQuery} />
+          </View>
+          <ExerciseFilterButton
+            onPress={() => setIsFilterModalOpen(true)}
+            activeCount={activeFilterCount}
+          />
+        </View>
 
         {/* ── GRID MODE: grouped by muscle ─────────────────────────── */}
+
         {viewMode === "grid" ? (
           <>
             {sortedGroups.length > 0 ? (
@@ -185,6 +199,19 @@ export default function ExercisesScreen() {
         visible={!!selectedExercise}
         onClose={closePreview}
       />
+
+      {/* Exercise Filter Modal (Bottom Sheet Dialog) */}
+      <ExerciseFilterModal
+        visible={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        selectedCategory={categoryFilter}
+        onSelectCategory={setCategoryFilter}
+        selectedEquipment={equipmentFilter}
+        onSelectEquipment={setEquipmentFilter}
+        onResetFilters={resetFilters}
+        totalResultsCount={filteredExercises.length}
+      />
     </View>
   );
 }
+
