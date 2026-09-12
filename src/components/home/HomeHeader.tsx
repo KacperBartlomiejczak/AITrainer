@@ -1,14 +1,15 @@
 import * as React from "react";
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { UserProfile } from "@/schemas/user.schema";
 
 interface HomeHeaderProps {
   user: UserProfile;
+  onPressProfile?: () => void;
 }
 
-export function HomeHeader({ user }: HomeHeaderProps) {
+export function HomeHeader({ user, onPressProfile }: HomeHeaderProps) {
   const initials = user.name
     .split(" ")
     .map((n) => n[0])
@@ -40,11 +41,19 @@ export function HomeHeader({ user }: HomeHeaderProps) {
           </Badge>
         )}
 
-        <Avatar className="h-11 w-11 border-2 border-[#27272A]">
-          <AvatarFallback textClassName="font-extrabold text-sm text-[#007AFF]">
-            {initials || "AI"}
-          </AvatarFallback>
-        </Avatar>
+        <Pressable
+          onPress={onPressProfile}
+          accessibilityRole="button"
+          accessibilityLabel="Otwórz profil i ustawienia"
+          testID="profile-button"
+          className="active:opacity-75"
+        >
+          <Avatar className="h-11 w-11 border-2 border-[#27272A]">
+            <AvatarFallback textClassName="font-extrabold text-sm text-[#007AFF]">
+              {initials || "AI"}
+            </AvatarFallback>
+          </Avatar>
+        </Pressable>
       </View>
     </View>
   );

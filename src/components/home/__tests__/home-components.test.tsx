@@ -25,6 +25,14 @@ describe("Home Screen Components", () => {
     expect(screen.getByText("KB")).toBeTruthy();
   });
 
+  it("triggers onPressProfile when clicking avatar in HomeHeader", async () => {
+    const onPressProfileMock = jest.fn();
+    await render(<HomeHeader user={mockUser} onPressProfile={onPressProfileMock} />);
+    const profileButton = screen.getByTestId("profile-button");
+    fireEvent.press(profileButton);
+    expect(onPressProfileMock).toHaveBeenCalledTimes(1);
+  });
+
   it("renders AiCoachCard and handles coach action", async () => {
     const onAskCoachMock = jest.fn();
     const mockTip = {

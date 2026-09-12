@@ -1,11 +1,12 @@
 import React from "react";
-import { render, screen } from "@testing-library/react-native";
+import { render, screen, fireEvent } from "@testing-library/react-native";
 import HomeScreen from "../index";
 
 // Mock expo-router
+const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
     replace: jest.fn(),
     back: jest.fn(),
   }),
@@ -18,7 +19,7 @@ jest.mock("react-native-safe-area-context", () => ({
 
 describe("HomeScreen Entrypoint", () => {
   it("renders full home screen with all sections", async () => {
-    await render(<HomeScreen />);
+    const { unmount } = await render(<HomeScreen />);
 
     // Header
     expect(screen.getByText("Cześć, Kacper! 👋")).toBeTruthy();
@@ -51,5 +52,19 @@ describe("HomeScreen Entrypoint", () => {
     // Recent Activity
     expect(screen.getByText("Ostatnia Aktywność")).toBeTruthy();
     expect(screen.getByText("Plecy + Biceps (FBW B)")).toBeTruthy();
+
+    unmount();
+  });
+
+  it("navigates to /profile when profile avatar is clicked", async () => {
+    mockPush.mockClear();
+    const { unmount } = await render(<HomeScreen />);
+
+    const profileButton = screen.getByTestId("profile-button");
+    fireEvent.press(profileButton);
+
+    expect(mockPush).toHaveBeenCalledWith("/profile");
+
+    unmount();
   });
 });
