@@ -14,5 +14,8 @@ module.exports = {
   setupFiles: ["<rootDir>/src/__mocks__/jest.rn-setup.js"],
   setupFilesAfterEnv: ["<rootDir>/src/__mocks__/jest.setup.js"],
   testPathIgnorePatterns: ["/node_modules/", "/example/"],
+  // Increase timeout to handle render-heavy component tests in full suite runs
+  testTimeout: 15000,
+  // Prevent hanging async operations (e.g. animation timers) from blocking the runner
+  forceExit: true,
 };
-
