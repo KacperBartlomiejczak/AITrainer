@@ -62,7 +62,7 @@ export default function ProfileScreen() {
         <Pressable
           testID="back-button"
           onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-[#121214] border border-[#27272A] items-center justify-center active:bg-[#1E1E22]"
+          className="w-11 h-11 rounded-full bg-[#121214] border border-[#27272A] items-center justify-center active:bg-[#1E1E22]"
         >
           <Text className="text-white text-base font-bold">←</Text>
         </Pressable>
