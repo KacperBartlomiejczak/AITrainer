@@ -169,6 +169,11 @@ export const EXERCISE_ASSET_MAP: Record<string, ExerciseMediaItem> = {
     image: require("@/assets/images/1201-0JtKWum.jpg"),
     gif: require("@/assets/videos/1201-0JtKWum.gif"),
   },
+  // ── USER PAST TRAINING EXAMPLES ───────────────────────────
+  "example_past_photo": {
+    image: require("@/assets/Example_past_training_photo.jpg"),
+    gif: require("@/assets/Example_past_training_photo.jpg"),
+  },
 };
 
 export function getExerciseMedia(id: string): ExerciseMediaItem | null {
