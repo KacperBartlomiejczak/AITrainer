@@ -1,84 +1,37 @@
-import React, { useEffect } from "react";
-import { View, Text, ActivityIndicator } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  withDelay,
-  Easing,
-} from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import React from "react";
+import { Text, ActivityIndicator } from "react-native";
+import Animated from "react-native-reanimated";
+import {
+  useSplashScreen,
+  type UseSplashScreenOptions,
+} from "@/hooks/use-splash-screen";
 
-export default function SplashScreen() {
-  const insets = useSafeAreaInsets();
+export type SplashScreenProps = UseSplashScreenOptions;
 
-  // ── Animations ──
-  const logoScale = useSharedValue(1);
-  const logoOpacity = useSharedValue(0);
-  const titleOpacity = useSharedValue(0);
-  const subtitleOpacity = useSharedValue(0);
-  const loaderOpacity = useSharedValue(0);
+export default function SplashScreen({
+  onFinish,
+  durationMs = 1800,
+  isOverlay = false,
+}: SplashScreenProps) {
+  "use no memo";
 
-  useEffect(() => {
-    // Logo fade in
-    logoOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-
-    // Logo pulse
-    logoScale.value = withDelay(
-      600,
-      withRepeat(
-        withSequence(
-          withTiming(1.08, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      )
-    );
-
-    // Title fade in after logo
-    titleOpacity.value = withDelay(
-      400,
-      withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) })
-    );
-
-    // Subtitle fade in after title
-    subtitleOpacity.value = withDelay(
-      800,
-      withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) })
-    );
-
-    // Loader fade in last
-    loaderOpacity.value = withDelay(
-      1200,
-      withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) })
-    );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const logoAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: logoScale.value }],
-    opacity: logoOpacity.value,
-  }));
-
-  const titleAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: titleOpacity.value,
-  }));
-
-  const subtitleAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: subtitleOpacity.value,
-  }));
-
-  const loaderAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: loaderOpacity.value,
-  }));
+  const {
+    config,
+    containerStyle,
+    logoAnimatedStyle,
+    titleAnimatedStyle,
+    subtitleAnimatedStyle,
+    loaderAnimatedStyle,
+  } = useSplashScreen({ onFinish, durationMs, isOverlay });
 
   return (
-    <View
-      className="flex-1 bg-black items-center justify-center"
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+    <Animated.View
+      className={
+        config.isOverlay
+          ? "absolute inset-0 z-50 bg-black items-center justify-center"
+          : "flex-1 bg-black items-center justify-center"
+      }
+      style={containerStyle}
     >
       {/* Logo Icon */}
       <Animated.View
@@ -108,6 +61,6 @@ export default function SplashScreen() {
       <Animated.View style={loaderAnimatedStyle}>
         <ActivityIndicator size="small" color="#007AFF" />
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 }

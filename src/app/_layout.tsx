@@ -1,5 +1,5 @@
 import "./global.css";
-import { useEffect, useCallback } from "react";
+import React, { useCallback, useState, useLayoutEffect } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
@@ -7,8 +7,11 @@ import * as SplashScreenModule from "expo-splash-screen";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import SplashScreen from "./splash";
 
-// Keep the native splash screen visible while we load the store
-SplashScreenModule.preventAutoHideAsync();
+// Keep native splash screen visible while JS bundle initializes.
+// Safe catch prevents unhandled rejection if already called.
+SplashScreenModule.preventAutoHideAsync().catch(() => {
+  /* ignore already prevented */
+});
 
 export default function RootLayout() {
   const router = useRouter();
@@ -18,37 +21,47 @@ export default function RootLayout() {
     (s) => s.hasCompletedOnboarding
   );
 
+  const [showSplashOverlay, setShowSplashOverlay] = useState<boolean>(true);
+
   const onLayoutRootView = useCallback(async () => {
-    if (isHydrated) {
-      // Hide native splash screen once store is ready
+    try {
+      // Hide native splash screen safely once root view is laid out
       await SplashScreenModule.hideAsync();
+    } catch {
+      /* ignore if already hidden */
     }
-  }, [isHydrated]);
+  }, []);
 
-  useEffect(() => {
-    if (!isHydrated) return;
+  const handleSplashFinish = useCallback(() => {
+    setShowSplashOverlay(false);
+  }, []);
 
-    const inOnboarding = segments[0] === "(onboarding)";
-    const onSplash = segments[0] === "splash";
+  const currentSegments = segments as string[];
+  const onSplash = currentSegments.includes("splash");
+  const isSplashOverlayActive = showSplashOverlay && !onSplash;
 
-    if (!hasCompletedOnboarding && !inOnboarding) {
-      // User hasn't onboarded — redirect to onboarding
+  useLayoutEffect(() => {
+    // Only navigate after store is hydrated and splash overlay completes
+    if (!isHydrated || isSplashOverlayActive) return;
+
+    // Check if the user is currently within any onboarding step
+    const inOnboarding = currentSegments.some(
+      (s) => s.startsWith("step-") || s === "(onboarding)"
+    );
+
+    if (!hasCompletedOnboarding && !inOnboarding && !onSplash) {
       router.replace("/(onboarding)/step-name");
     } else if (hasCompletedOnboarding && (inOnboarding || onSplash)) {
-      // User already onboarded — redirect to home
       router.replace("/");
     }
-  }, [isHydrated, hasCompletedOnboarding, segments, router]);
-
-  // Show custom animated splash while store hydrates
-  if (!isHydrated) {
-    return (
-      <View className="flex-1 bg-black" onLayout={onLayoutRootView}>
-        <StatusBar style="light" />
-        <SplashScreen />
-      </View>
-    );
-  }
+  }, [
+    isHydrated,
+    isSplashOverlayActive,
+    hasCompletedOnboarding,
+    currentSegments,
+    onSplash,
+    router,
+  ]);
 
   return (
     <View className="flex-1 bg-black" onLayout={onLayoutRootView}>
@@ -60,6 +73,15 @@ export default function RootLayout() {
           animation: "fade",
         }}
       />
+
+      {/* Smooth animated splash overlay on cold start (skip if user is directly on /splash route to prevent duplicate mount) */}
+      {(!isHydrated || showSplashOverlay) && !onSplash && (
+        <SplashScreen
+          isOverlay
+          durationMs={1600}
+          onFinish={handleSplashFinish}
+        />
+      )}
     </View>
   );
 }

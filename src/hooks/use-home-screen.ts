@@ -1,5 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { HomeScreenDataSchema, type HomeScreenData } from "@/schemas/home.schema";
+import { useOnboardingStore } from "@/stores/onboarding.store";
+import { OnboardingFormSchema } from "@/schemas/onboarding.schema";
 
 const INITIAL_MOCK_HOME_DATA: HomeScreenData = {
   user: {
@@ -146,8 +148,28 @@ export function useHomeScreen() {
     }
   }, []);
 
+  const rawOnboardingData = useOnboardingStore((s) => s.onboardingData);
+
+  const personalizedData = useMemo(() => {
+    if (!rawOnboardingData) return data;
+
+    // Runtime validation with Zod to prevent crashes on corrupt/stale AsyncStorage payload
+    const parsed = OnboardingFormSchema.safeParse(rawOnboardingData);
+    if (!parsed.success) {
+      return data;
+    }
+
+    return {
+      ...data,
+      user: {
+        ...data.user,
+        name: parsed.data.name,
+      },
+    };
+  }, [data, rawOnboardingData]);
+
   return {
-    data,
+    data: personalizedData,
     isLoading,
     error,
     refreshData,

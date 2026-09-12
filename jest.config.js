@@ -6,7 +6,8 @@ module.exports = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^@/assets/(.*)$": "<rootDir>/assets/$1",
+    "\\.css$": "<rootDir>/src/__mocks__/styleMock.js",
   },
-  setupFilesAfterEnv: [],
+  setupFilesAfterEnv: ["<rootDir>/src/__mocks__/jest.setup.js"],
   testPathIgnorePatterns: ["/node_modules/", "/example/"],
 };
