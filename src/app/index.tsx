@@ -30,6 +30,10 @@ export default function HomeScreen() {
     router.push("/ai-coach" as never);
   };
 
+  const handleOpenProfile = () => {
+    router.push("/profile" as never);
+  };
+
   return (
     <View className="flex-1 bg-black">
       <ScrollView
@@ -50,7 +54,7 @@ export default function HomeScreen() {
       >
         <View className="flex-col gap-5">
           {/* Header with greeting, streak and user avatar */}
-          <HomeHeader user={data.user} />
+          <HomeHeader user={data.user} onPressProfile={handleOpenProfile} />
 
           {/* AI Coach interactive banner */}
           <AiCoachCard tip={data.aiCoachTip} onAskCoach={handleAskCoach} />

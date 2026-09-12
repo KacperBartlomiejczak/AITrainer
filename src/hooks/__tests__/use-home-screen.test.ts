@@ -43,4 +43,23 @@ describe("useHomeScreen hook", () => {
     unmount();
     useOnboardingStore.getState().resetOnboarding();
   });
+
+  it("should fall back gracefully to default user name when onboarding data in store is invalid or corrupt", async () => {
+    // Malformed data simulating corrupted AsyncStorage payload (non-string name, invalid goal)
+    useOnboardingStore.setState({
+      hasCompletedOnboarding: true,
+      onboardingData: {
+        name: 12345 as unknown as string,
+        fitnessGoal: "corrupted_goal" as unknown as "strength",
+        focusMuscleGroups: [] as unknown as ["chest"],
+      },
+      isHydrated: true,
+    });
+
+    const { result, unmount } = await renderHook(() => useHomeScreen());
+    expect(result.current.data.user.name).toBe("Kacper");
+
+    unmount();
+    useOnboardingStore.getState().resetOnboarding();
+  });
 });

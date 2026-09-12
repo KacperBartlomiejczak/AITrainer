@@ -1,5 +1,5 @@
 import "./global.css";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useLayoutEffect } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
@@ -36,23 +36,32 @@ export default function RootLayout() {
     setShowSplashOverlay(false);
   }, []);
 
-  useEffect(() => {
+  const currentSegments = segments as string[];
+  const onSplash = currentSegments.includes("splash");
+  const isSplashOverlayActive = showSplashOverlay && !onSplash;
+
+  useLayoutEffect(() => {
     // Only navigate after store is hydrated and splash overlay completes
-    if (!isHydrated || showSplashOverlay) return;
+    if (!isHydrated || isSplashOverlayActive) return;
 
     // Check if the user is currently within any onboarding step
-    const currentSegments = segments as string[];
     const inOnboarding = currentSegments.some(
       (s) => s.startsWith("step-") || s === "(onboarding)"
     );
-    const onSplash = currentSegments.includes("splash");
 
-    if (!hasCompletedOnboarding && !inOnboarding) {
+    if (!hasCompletedOnboarding && !inOnboarding && !onSplash) {
       router.replace("/(onboarding)/step-name");
     } else if (hasCompletedOnboarding && (inOnboarding || onSplash)) {
       router.replace("/");
     }
-  }, [isHydrated, showSplashOverlay, hasCompletedOnboarding, segments, router]);
+  }, [
+    isHydrated,
+    isSplashOverlayActive,
+    hasCompletedOnboarding,
+    currentSegments,
+    onSplash,
+    router,
+  ]);
 
   return (
     <View className="flex-1 bg-black" onLayout={onLayoutRootView}>
@@ -65,8 +74,8 @@ export default function RootLayout() {
         }}
       />
 
-      {/* Smooth animated splash overlay on cold start */}
-      {(!isHydrated || showSplashOverlay) && (
+      {/* Smooth animated splash overlay on cold start (skip if user is directly on /splash route to prevent duplicate mount) */}
+      {(!isHydrated || showSplashOverlay) && !onSplash && (
         <SplashScreen
           isOverlay
           durationMs={1600}

@@ -1,6 +1,7 @@
 import React from "react";
-import { render } from "@testing-library/react-native";
+import { render, screen, act } from "@testing-library/react-native";
 import RootLayout from "../_layout";
+import * as SplashScreenModule from "expo-splash-screen";
 
 // Mock react-native-reanimated BEFORE any component import
 jest.mock("react-native-reanimated", () => {
@@ -17,6 +18,7 @@ jest.mock("react-native-reanimated", () => {
     Text: RNText,
     useSharedValue: (init: number) => ({ value: init }),
     useAnimatedStyle: () => ({}),
+    useReducedMotion: () => false,
     withTiming: (toValue: number) => toValue,
     withDelay: (_: number, anim: unknown) => anim,
     withRepeat: (anim: unknown) => anim,
@@ -30,7 +32,10 @@ jest.mock("react-native-reanimated", () => {
   };
 });
 
-// Mock expo-router without JSX to avoid babel css-interop issues
+const mockReplace = jest.fn();
+let mockSegments: string[] = [];
+
+// Mock expo-router
 jest.mock("expo-router", () => {
   const React = jest.requireActual("react");
   const RN = jest.requireActual("react-native");
@@ -48,9 +53,9 @@ jest.mock("expo-router", () => {
 
   return {
     useRouter: () => ({
-      replace: jest.fn(),
+      replace: mockReplace,
     }),
-    useSegments: () => [],
+    useSegments: () => mockSegments,
     Stack: MockStack,
   };
 });
@@ -70,14 +75,15 @@ jest.mock("expo-splash-screen", () => ({
   preventAutoHideAsync: jest.fn().mockResolvedValue(true),
 }));
 
+let mockStoreState = {
+  isHydrated: true,
+  hasCompletedOnboarding: true,
+};
+
 // Mock onboarding store
 jest.mock("@/stores/onboarding.store", () => ({
   useOnboardingStore: jest.fn((selector) => {
-    const state = {
-      isHydrated: true,
-      hasCompletedOnboarding: true,
-    };
-    return typeof selector === "function" ? selector(state) : state;
+    return typeof selector === "function" ? selector(mockStoreState) : mockStoreState;
   }),
 }));
 
@@ -86,6 +92,11 @@ describe("RootLayout", () => {
     jest.useFakeTimers();
     jest.clearAllMocks();
     jest.clearAllTimers();
+    mockSegments = [];
+    mockStoreState = {
+      isHydrated: true,
+      hasCompletedOnboarding: true,
+    };
   });
 
   afterEach(() => {
@@ -94,12 +105,111 @@ describe("RootLayout", () => {
   });
 
   it("always renders the Stack navigator for Expo Router compliance", async () => {
-    const { getByTestId } = await render(<RootLayout />);
-    expect(getByTestId("mock-stack-navigator")).toBeTruthy();
+    await render(<RootLayout />);
+    expect(screen.getByTestId("mock-stack-navigator")).toBeTruthy();
   });
 
-  it("renders the animated splash overlay initially", async () => {
-    const { getByText } = await render(<RootLayout />);
-    expect(getByText("AITrainer")).toBeTruthy();
+  it("renders the animated splash overlay initially on root route", async () => {
+    await render(<RootLayout />);
+    expect(screen.getByText("AITrainer")).toBeTruthy();
+  });
+
+  it("does NOT render the animated splash overlay if current route is /splash", async () => {
+    mockSegments = ["splash"];
+    await render(<RootLayout />);
+
+    expect(screen.queryByText("AITrainer")).toBeNull();
+  });
+
+  it("safely hides native splash screen on root view layout", async () => {
+    const { getByTestId } = await render(<RootLayout />);
+    const container = getByTestId("mock-stack-navigator").parent;
+
+    await act(async () => {
+      container?.props.onLayout?.();
+    });
+
+    expect(SplashScreenModule.hideAsync).toHaveBeenCalled();
+  });
+
+  it("redirects un-onboarded user to /(onboarding)/step-name after splash overlay finishes", async () => {
+    mockStoreState = {
+      isHydrated: true,
+      hasCompletedOnboarding: false,
+    };
+    mockSegments = [];
+
+    await render(<RootLayout />);
+
+    // Splash overlay is still showing; should NOT navigate yet
+    expect(mockReplace).not.toHaveBeenCalled();
+
+    // Advance splash duration timer (1600ms)
+    await act(async () => {
+      jest.advanceTimersByTime(1600);
+    });
+
+    expect(mockReplace).toHaveBeenCalledWith("/(onboarding)/step-name");
+  });
+
+  it("does NOT redirect user who is already in an onboarding step", async () => {
+    mockStoreState = {
+      isHydrated: true,
+      hasCompletedOnboarding: false,
+    };
+    mockSegments = ["(onboarding)", "step-muscles"];
+
+    await render(<RootLayout />);
+
+    await act(async () => {
+      jest.advanceTimersByTime(1600);
+    });
+
+    // User is already in onboarding step, so no redirect should occur
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it("redirects user with completed onboarding away from onboarding route back to /", async () => {
+    mockStoreState = {
+      isHydrated: true,
+      hasCompletedOnboarding: true,
+    };
+    mockSegments = ["(onboarding)", "step-name"];
+
+    await render(<RootLayout />);
+
+    await act(async () => {
+      jest.advanceTimersByTime(1600);
+    });
+
+    expect(mockReplace).toHaveBeenCalledWith("/");
+  });
+
+  it("redirects user with completed onboarding away from /splash route back to /", async () => {
+    mockStoreState = {
+      isHydrated: true,
+      hasCompletedOnboarding: true,
+    };
+    mockSegments = ["splash"];
+
+    await render(<RootLayout />);
+
+    expect(mockReplace).toHaveBeenCalledWith("/");
+  });
+
+  it("does NOT navigate while store is not hydrated", async () => {
+    mockStoreState = {
+      isHydrated: false,
+      hasCompletedOnboarding: false,
+    };
+    mockSegments = [];
+
+    await render(<RootLayout />);
+
+    await act(async () => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });
