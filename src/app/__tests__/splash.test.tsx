@@ -18,6 +18,7 @@ jest.mock("react-native-reanimated", () => {
     Text,
     useSharedValue: (init: number) => ({ value: init }),
     useAnimatedStyle: () => ({}),
+    useReducedMotion: () => false,
     withTiming: (toValue: number) => toValue,
     withDelay: (_: number, anim: unknown) => anim,
     withRepeat: (anim: unknown) => anim,
