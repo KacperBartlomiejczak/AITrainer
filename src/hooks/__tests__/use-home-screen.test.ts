@@ -1,5 +1,6 @@
 import { renderHook, act } from "@testing-library/react-native";
 import { useHomeScreen } from "../use-home-screen";
+import { useOnboardingStore } from "@/stores/onboarding.store";
 
 describe("useHomeScreen hook", () => {
   it("should initialize with validated home screen data", async () => {
@@ -23,5 +24,23 @@ describe("useHomeScreen hook", () => {
 
     expect(result.current.isLoading).toBe(false);
     expect(result.current.data).toBeDefined();
+  });
+
+  it("should use user name from onboarding store if available", async () => {
+    useOnboardingStore.setState({
+      hasCompletedOnboarding: true,
+      onboardingData: {
+        name: "Michał",
+        fitnessGoal: "muscle_gain",
+        focusMuscleGroups: ["chest"],
+      },
+      isHydrated: true,
+    });
+
+    const { result, unmount } = await renderHook(() => useHomeScreen());
+    expect(result.current.data.user.name).toBe("Michał");
+
+    unmount();
+    useOnboardingStore.getState().resetOnboarding();
   });
 });

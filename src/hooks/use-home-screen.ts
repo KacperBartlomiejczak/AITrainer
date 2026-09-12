@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { HomeScreenDataSchema, type HomeScreenData } from "@/schemas/home.schema";
+import { useOnboardingStore } from "@/stores/onboarding.store";
 
 const INITIAL_MOCK_HOME_DATA: HomeScreenData = {
   user: {
@@ -146,8 +147,21 @@ export function useHomeScreen() {
     }
   }, []);
 
+  const onboardingData = useOnboardingStore((s) => s.onboardingData);
+
+  const personalizedData = useMemo(() => {
+    if (!onboardingData?.name) return data;
+    return {
+      ...data,
+      user: {
+        ...data.user,
+        name: onboardingData.name,
+      },
+    };
+  }, [data, onboardingData]);
+
   return {
-    data,
+    data: personalizedData,
     isLoading,
     error,
     refreshData,
