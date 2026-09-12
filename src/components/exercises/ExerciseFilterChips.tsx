@@ -8,14 +8,20 @@ interface ExerciseFilterChipsProps {
   onSelectCategory: (category: ExerciseCategoryFilter) => void;
 }
 
-const CATEGORY_CHIPS: { id: ExerciseCategoryFilter; label: string }[] = [
-  { id: "all", label: "Wszystkie" },
-  { id: "chest", label: "Klatka" },
-  { id: "back", label: "Plecy" },
-  { id: "legs", label: "Nogi" },
-  { id: "arms", label: "Ramiona" },
-  { id: "shoulders", label: "Barki" },
-  { id: "waist", label: "Brzuch" },
+const CATEGORY_CHIPS: {
+  id: ExerciseCategoryFilter;
+  label: string;
+  emoji: string;
+}[] = [
+  { id: "all", label: "Wszystkie", emoji: "🏋️" },
+  { id: "chest", label: "Klatka", emoji: "💪" },
+  { id: "back", label: "Plecy", emoji: "🔙" },
+  { id: "upper legs", label: "Nogi", emoji: "🦵" },
+  { id: "upper arms", label: "Ramiona", emoji: "💪" },
+  { id: "shoulders", label: "Barki", emoji: "🏃" },
+  { id: "waist", label: "Brzuch", emoji: "🎯" },
+  { id: "cardio", label: "Cardio", emoji: "❤️" },
+  { id: "lower legs", label: "Łydki", emoji: "🦶" },
 ];
 
 export function ExerciseFilterChips({
@@ -38,12 +44,13 @@ export function ExerciseFilterChips({
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
             className={cn(
-              "px-3.5 py-1.5 rounded-full border transition-all active:scale-95",
+              "flex-row items-center gap-1.5 px-3.5 py-1.5 rounded-full border",
               isSelected
-                ? "bg-[#007AFF] border-[#007AFF] shadow-sm shadow-[#007AFF]/40"
+                ? "bg-[#007AFF] border-[#007AFF]"
                 : "bg-[#121214] border-[#27272A] active:bg-[#1E1E22]"
             )}
           >
+            <Text className="text-[11px]">{chip.emoji}</Text>
             <Text
               className={cn(
                 "text-xs font-semibold",

@@ -16,6 +16,8 @@ const MOCK_EXERCISE: CatalogExercise = {
   instructionsPl: "Połóż się płasko na ławce i wyciśnij sztangę w górę.",
   imageFile: "images/0025-EIeI8Vf.jpg",
   gifFile: "videos/0025-EIeI8Vf.gif",
+  muscleGroup: "pectorals",
+  secondaryMuscles: ["shoulders", "triceps"],
 };
 
 describe("Exercise Catalog Components", () => {
@@ -48,6 +50,7 @@ describe("Exercise Catalog Components", () => {
     expect(getByText("Wszystkie")).toBeTruthy();
     expect(getByText("Klatka")).toBeTruthy();
     expect(getByText("Plecy")).toBeTruthy();
+    expect(getByText("Cardio")).toBeTruthy();
 
     await act(async () => {
       fireEvent.press(getByText("Klatka"));

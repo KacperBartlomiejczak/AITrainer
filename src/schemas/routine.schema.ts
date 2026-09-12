@@ -19,3 +19,11 @@ export const RoutineListSchema = z.array(RoutineItemSchema);
 export type RoutineLevel = z.infer<typeof RoutineLevelSchema>;
 export type RoutineItem = z.infer<typeof RoutineItemSchema>;
 export type RoutineList = z.infer<typeof RoutineListSchema>;
+
+export const ROUTINE_LEVEL_LABELS: Record<RoutineLevel, { label: string }> = {
+  beginner: { label: "Początkujący" },
+  intermediate: { label: "Średni" },
+  advanced: { label: "Zaawansowany" },
+};
+
+

@@ -1,21 +1,30 @@
 import { useMemo, useCallback } from "react";
 import { useRouter } from "expo-router";
 import { useOnboardingStore } from "@/stores/onboarding.store";
-import { FITNESS_GOAL_LABELS } from "@/schemas/onboarding.schema";
+import {
+  FITNESS_GOAL_LABELS,
+  OnboardingFormSchema,
+} from "@/schemas/onboarding.schema";
 
 export function usePublicProfile() {
   const router = useRouter();
-  const onboardingData = useOnboardingStore((s) => s.onboardingData);
+  const rawOnboardingData = useOnboardingStore((s) => s.onboardingData);
+
+  const validatedData = useMemo(() => {
+    if (!rawOnboardingData) return null;
+    const parsed = OnboardingFormSchema.safeParse(rawOnboardingData);
+    return parsed.success ? parsed.data : null;
+  }, [rawOnboardingData]);
 
   const displayName = useMemo(() => {
-    return onboardingData?.name?.trim() || "Kacper";
-  }, [onboardingData]);
+    return validatedData?.name?.trim() || "Kacper";
+  }, [validatedData]);
 
   const fitnessGoalLabel = useMemo(() => {
-    if (!onboardingData?.fitnessGoal) return "Budowa sylwetki";
-    const item = FITNESS_GOAL_LABELS[onboardingData.fitnessGoal];
+    if (!validatedData?.fitnessGoal) return "Budowa sylwetki";
+    const item = FITNESS_GOAL_LABELS[validatedData.fitnessGoal];
     return item?.label ?? "Budowa sylwetki";
-  }, [onboardingData]);
+  }, [validatedData]);
 
   const streakDays = 4;
 

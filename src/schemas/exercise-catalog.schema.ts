@@ -2,12 +2,15 @@ import { z } from "zod";
 
 export const ExerciseCategoryFilterSchema = z.enum([
   "all",
-  "waist",
   "chest",
   "back",
-  "legs",
+  "upper legs",
+  "upper arms",
   "shoulders",
-  "arms",
+  "waist",
+  "cardio",
+  "lower legs",
+  "lower arms",
 ]);
 
 export const CatalogExerciseSchema = z.object({
@@ -18,8 +21,11 @@ export const CatalogExerciseSchema = z.object({
   target: z.string().min(1),
   equipment: z.string().min(1),
   instructionsPl: z.string().min(1),
+  instructionStepsPl: z.array(z.string()).optional(),
   imageFile: z.string().min(1),
   gifFile: z.string().min(1),
+  muscleGroup: z.string().default("other"),
+  secondaryMuscles: z.array(z.string()).default([]),
 });
 
 export const ExerciseCatalogListSchema = z.array(CatalogExerciseSchema);
@@ -27,3 +33,4 @@ export const ExerciseCatalogListSchema = z.array(CatalogExerciseSchema);
 export type ExerciseCategoryFilter = z.infer<typeof ExerciseCategoryFilterSchema>;
 export type CatalogExercise = z.infer<typeof CatalogExerciseSchema>;
 export type ExerciseCatalogList = z.infer<typeof ExerciseCatalogListSchema>;
+

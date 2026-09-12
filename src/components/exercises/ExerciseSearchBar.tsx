@@ -28,6 +28,8 @@ export function ExerciseSearchBar({
       {query.length > 0 && (
         <Pressable
           testID="clear-search-button"
+          accessibilityRole="button"
+          accessibilityLabel="Wyczyść wyszukiwanie"
           onPress={() => {
             onChangeQuery("");
             onClear?.();

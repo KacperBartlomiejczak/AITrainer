@@ -22,7 +22,7 @@ export default function WorkoutsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-col gap-6">
+        <View className="flex-col gap-8">
           {/* Header */}
           <View className="flex-col gap-1">
             <Text className="text-2xl font-black text-white tracking-tight">
@@ -33,7 +33,7 @@ export default function WorkoutsScreen() {
             </Text>
           </View>
 
-          {/* Hero Banner to All Exercises */}
+          {/* Hero Banner with "Pokaż wszystkie ćwiczenia" button */}
           <ExercisesHeroBanner onPressShowAll={openAllExercises} />
 
           {/* Routines List */}

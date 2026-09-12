@@ -20,7 +20,7 @@ export function ExerciseCard({ exercise, onPressPreview }: ExerciseCardProps) {
       accessibilityRole="button"
       className="flex-row items-center bg-[#121214] border border-[#27272A] rounded-2xl p-3 gap-3.5 active:bg-[#18181B]"
     >
-      <View className="relative w-18 h-18 rounded-xl bg-[#1E1E22] overflow-hidden items-center justify-center border border-[#27272A]">
+      <View className="relative w-[72px] h-[72px] rounded-xl bg-[#1E1E22] overflow-hidden items-center justify-center border border-[#27272A]">
         {media ? (
           <Image
             source={media.image}

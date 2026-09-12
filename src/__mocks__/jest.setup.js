@@ -1,4 +1,4 @@
-/* global jest */
+/* global jest, beforeEach */
 const React = require("react");
 const { View } = require("react-native");
 
@@ -18,13 +18,26 @@ const mockRouter = {
   push: jest.fn(),
   replace: jest.fn(),
   back: jest.fn(),
+  canGoBack: jest.fn(() => true),
 };
+
+const mockUseLocalSearchParams = jest.fn(() => ({}));
+
+beforeEach(() => {
+  mockRouter.push.mockClear();
+  mockRouter.replace.mockClear();
+  mockRouter.back.mockClear();
+  mockRouter.canGoBack.mockReset();
+  mockRouter.canGoBack.mockReturnValue(true);
+  mockUseLocalSearchParams.mockReset();
+  mockUseLocalSearchParams.mockReturnValue({});
+});
 
 jest.mock("expo-router", () => ({
   useRouter: () => mockRouter,
   useSegments: () => [],
   usePathname: jest.fn(() => "/"),
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: mockUseLocalSearchParams,
   Link: ({ children }) => children,
   Redirect: () => null,
   Stack: MockStack,
