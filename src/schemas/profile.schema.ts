@@ -1,8 +1,11 @@
 import { z } from "zod";
 import {
+  ExperienceLevelSchema,
   FitnessGoalSchema,
-  MuscleGroupSchema,
+  MuscleFocusSchema,
+  type ExperienceLevel,
   type FitnessGoal,
+  type MuscleFocus,
   type MuscleGroup,
 } from "./onboarding.schema";
 
@@ -13,10 +16,9 @@ export const ProfileFormSchema = z.object({
     .trim()
     .min(1, "Imię jest wymagane")
     .max(50, "Imię może mieć maksymalnie 50 znaków"),
+  experienceLevel: ExperienceLevelSchema,
   fitnessGoal: FitnessGoalSchema,
-  focusMuscleGroups: z
-    .array(MuscleGroupSchema)
-    .min(1, "Wybierz przynajmniej jedną partię ciała"),
+  muscleFocus: MuscleFocusSchema,
 });
 
 // ── App Settings Preferences ──────────────────────────────────
@@ -40,4 +42,4 @@ export type ProfileFormData = z.infer<typeof ProfileFormSchema>;
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
 export type UserDataExport = z.infer<typeof UserDataExportSchema>;
 
-export { type FitnessGoal, type MuscleGroup };
+export { type ExperienceLevel, type FitnessGoal, type MuscleFocus, type MuscleGroup };

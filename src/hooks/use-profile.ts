@@ -1,19 +1,34 @@
 import { useState, useCallback, useMemo } from "react";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import {
+  UNDECIDED_MUSCLE_FOCUS,
+  areMuscleFocusesEqual,
+  toggleMuscleGroupInFocus,
+  toggleUndecidedMuscleFocus as toggleUndecidedInFocus,
+} from "@/lib/muscle-focus";
+import {
   ProfileFormSchema,
   AppSettingsSchema,
   type AppSettings,
   type UserDataExport,
+  type ExperienceLevel,
   type FitnessGoal,
+  type MuscleFocus,
   type MuscleGroup,
 } from "@/schemas/profile.schema";
 
 export interface ProfileFormErrors {
   name?: string;
+  experienceLevel?: string;
   fitnessGoal?: string;
-  focusMuscleGroups?: string;
+  muscleFocus?: string;
   general?: string;
+}
+
+const PROFILE_ERROR_FIELDS = ["name", "experienceLevel", "fitnessGoal", "muscleFocus"] as const;
+
+function isProfileErrorField(field: unknown): field is (typeof PROFILE_ERROR_FIELDS)[number] {
+  return PROFILE_ERROR_FIELDS.some((known) => known === field);
 }
 
 export function useProfile() {
@@ -22,11 +37,14 @@ export function useProfile() {
   const resetOnboardingInStore = useOnboardingStore((s) => s.resetOnboarding);
 
   const [name, setNameState] = useState<string>(onboardingData?.name ?? "");
+  const [experienceLevel, setExperienceLevelState] = useState<ExperienceLevel | null>(
+    onboardingData?.experienceLevel ?? null
+  );
   const [fitnessGoal, setFitnessGoalState] = useState<FitnessGoal | null>(
     onboardingData?.fitnessGoal ?? null
   );
-  const [focusMuscleGroups, setFocusMuscleGroupsState] = useState<MuscleGroup[]>(
-    onboardingData?.focusMuscleGroups ?? []
+  const [muscleFocus, setMuscleFocusState] = useState<MuscleFocus | null>(
+    onboardingData?.muscleFocus ?? null
   );
 
   const [errors, setErrors] = useState<ProfileFormErrors>({});
@@ -43,70 +61,78 @@ export function useProfile() {
     if (name === "" && onboardingData?.name) {
       setNameState(onboardingData.name);
     }
+    if (experienceLevel === null && onboardingData?.experienceLevel) {
+      setExperienceLevelState(onboardingData.experienceLevel);
+    }
     if (fitnessGoal === null && onboardingData?.fitnessGoal) {
       setFitnessGoalState(onboardingData.fitnessGoal);
     }
-    if (focusMuscleGroups.length === 0 && onboardingData?.focusMuscleGroups) {
-      setFocusMuscleGroupsState(onboardingData.focusMuscleGroups);
+    if (muscleFocus === null && onboardingData?.muscleFocus) {
+      setMuscleFocusState(onboardingData.muscleFocus);
     }
   }
 
   const isDirty = useMemo(() => {
-    const originalName = onboardingData?.name ?? "";
-    const originalGoal = onboardingData?.fitnessGoal ?? null;
-    const originalMuscles = onboardingData?.focusMuscleGroups ?? [];
+    return (
+      name !== (onboardingData?.name ?? "") ||
+      experienceLevel !== (onboardingData?.experienceLevel ?? null) ||
+      fitnessGoal !== (onboardingData?.fitnessGoal ?? null) ||
+      !areMuscleFocusesEqual(muscleFocus, onboardingData?.muscleFocus ?? null)
+    );
+  }, [name, experienceLevel, fitnessGoal, muscleFocus, onboardingData]);
 
-    const nameChanged = name !== originalName;
-    const goalChanged = fitnessGoal !== originalGoal;
-    const musclesChanged =
-      focusMuscleGroups.length !== originalMuscles.length ||
-      focusMuscleGroups.some((m) => !originalMuscles.includes(m));
-
-    return nameChanged || goalChanged || musclesChanged;
-  }, [name, fitnessGoal, focusMuscleGroups, onboardingData]);
+  const clearFieldFeedback = useCallback((field: keyof ProfileFormErrors) => {
+    setIsSuccess(false);
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  }, []);
 
   const setName = useCallback((newName: string) => {
     setNameState(newName);
-    setIsSuccess(false);
-    setErrors((prev) => ({ ...prev, name: undefined }));
-  }, []);
+    clearFieldFeedback("name");
+  }, [clearFieldFeedback]);
+
+  const setExperienceLevel = useCallback((level: ExperienceLevel) => {
+    setExperienceLevelState(level);
+    clearFieldFeedback("experienceLevel");
+  }, [clearFieldFeedback]);
 
   const setFitnessGoal = useCallback((newGoal: FitnessGoal) => {
     setFitnessGoalState(newGoal);
-    setIsSuccess(false);
-    setErrors((prev) => ({ ...prev, fitnessGoal: undefined }));
-  }, []);
+    clearFieldFeedback("fitnessGoal");
+  }, [clearFieldFeedback]);
 
   const toggleMuscleGroup = useCallback((group: MuscleGroup) => {
-    setIsSuccess(false);
-    setErrors((prev) => ({ ...prev, focusMuscleGroups: undefined }));
-    setFocusMuscleGroupsState((prev) =>
-      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group]
-    );
-  }, []);
+    setMuscleFocusState((prev) => toggleMuscleGroupInFocus(prev, group));
+    clearFieldFeedback("muscleFocus");
+  }, [clearFieldFeedback]);
+
+  const toggleUndecidedMuscleFocus = useCallback(() => {
+    setMuscleFocusState((prev) => toggleUndecidedInFocus(prev));
+    clearFieldFeedback("muscleFocus");
+  }, [clearFieldFeedback]);
 
   const resetForm = useCallback(() => {
     setNameState(onboardingData?.name ?? "");
+    setExperienceLevelState(onboardingData?.experienceLevel ?? null);
     setFitnessGoalState(onboardingData?.fitnessGoal ?? null);
-    setFocusMuscleGroupsState(onboardingData?.focusMuscleGroups ?? []);
+    setMuscleFocusState(onboardingData?.muscleFocus ?? null);
     setErrors({});
     setIsSuccess(false);
   }, [onboardingData]);
 
   const saveProfile = useCallback((): boolean => {
-    const formData = {
+    const parsed = ProfileFormSchema.safeParse({
       name: name.trim(),
+      experienceLevel,
       fitnessGoal,
-      focusMuscleGroups,
-    };
-
-    const parsed = ProfileFormSchema.safeParse(formData);
+      muscleFocus,
+    });
 
     if (!parsed.success) {
       const fieldErrors: ProfileFormErrors = {};
       for (const issue of parsed.error.issues) {
-        const fieldName = issue.path[0] as keyof ProfileFormErrors;
-        if (fieldName && !fieldErrors[fieldName]) {
+        const fieldName = issue.path[0];
+        if (isProfileErrorField(fieldName) && !fieldErrors[fieldName]) {
           fieldErrors[fieldName] = issue.message;
         }
       }
@@ -120,7 +146,7 @@ export function useProfile() {
     setErrors({});
     setIsSuccess(true);
     return true;
-  }, [name, fitnessGoal, focusMuscleGroups, updateProfileInStore]);
+  }, [name, experienceLevel, fitnessGoal, muscleFocus, updateProfileInStore]);
 
   const exportData = useCallback((): string => {
     const exportObject: UserDataExport = {
@@ -128,16 +154,14 @@ export function useProfile() {
       exportedAt: new Date().toISOString(),
       profile: {
         name: name.trim() || (onboardingData?.name ?? "Użytkownik"),
+        experienceLevel: experienceLevel ?? onboardingData?.experienceLevel ?? "beginner",
         fitnessGoal: fitnessGoal ?? onboardingData?.fitnessGoal ?? "general_fitness",
-        focusMuscleGroups:
-          focusMuscleGroups.length > 0
-            ? focusMuscleGroups
-            : (onboardingData?.focusMuscleGroups ?? ["chest"]),
+        muscleFocus: muscleFocus ?? onboardingData?.muscleFocus ?? UNDECIDED_MUSCLE_FOCUS,
       },
       appSettings,
     };
     return JSON.stringify(exportObject, null, 2);
-  }, [name, fitnessGoal, focusMuscleGroups, onboardingData, appSettings]);
+  }, [name, experienceLevel, fitnessGoal, muscleFocus, onboardingData, appSettings]);
 
   const resetAllData = useCallback(() => {
     resetOnboardingInStore();
@@ -146,15 +170,18 @@ export function useProfile() {
 
   return {
     name,
+    experienceLevel,
     fitnessGoal,
-    focusMuscleGroups,
+    muscleFocus,
     errors,
     isDirty,
     isSuccess,
     appSettings,
     setName,
+    setExperienceLevel,
     setFitnessGoal,
     toggleMuscleGroup,
+    toggleUndecidedMuscleFocus,
     resetForm,
     saveProfile,
     exportData,

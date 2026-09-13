@@ -58,7 +58,7 @@ AI trainer is powered AI trainer for people who staring their journey with the g
 - React native
 - Nativewind
 - Typescript
-- Neon.tech
+- Expo SQLite
 - Drizzle orm
 - Clerk
 - Expo

@@ -30,8 +30,9 @@ describe("ProfileScreen", () => {
       hasCompletedOnboarding: true,
       onboardingData: {
         name: "Kacper",
+        experienceLevel: "beginner",
         fitnessGoal: "muscle_gain",
-        focusMuscleGroups: ["chest", "back"],
+        muscleFocus: { mode: "selected", muscleGroups: ["chest", "back"] },
       },
       isHydrated: true,
     });
@@ -53,6 +54,29 @@ describe("ProfileScreen", () => {
     expect(screen.getByText("Masa mięśniowa")).toBeTruthy();
     expect(screen.getByText("Klatka piersiowa")).toBeTruthy();
     expect(screen.getByText("Zapisz zmiany")).toBeTruthy();
+
+    unmount();
+  });
+
+  it("edits experience level and 'Jeszcze nie wiem' and saves them", async () => {
+    const { unmount } = await render(<ProfileScreen />);
+
+    expect(screen.getAllByText("Dopiero zaczynam").length).toBeGreaterThanOrEqual(1);
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Zaawansowany"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Jeszcze nie wiem"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Zapisz zmiany"));
+    });
+
+    expect(useOnboardingStore.getState().onboardingData).toMatchObject({
+      experienceLevel: "advanced",
+      muscleFocus: { mode: "undecided" },
+    });
 
     unmount();
   });

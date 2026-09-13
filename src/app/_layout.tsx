@@ -1,3 +1,4 @@
+import { useDatabaseBootstrap } from "@/hooks/use-database-bootstrap";
 import { resolveOnboardingRedirect } from "@/lib/onboarding-redirect";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -34,6 +35,8 @@ export const unstable_settings = {
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
+  // Restores saved onboarding from SQLite; flips `isHydrated` when done
+  useDatabaseBootstrap();
   const isHydrated = useOnboardingStore((s) => s.isHydrated);
   const hasCompletedOnboarding = useOnboardingStore(
     (s) => s.hasCompletedOnboarding,

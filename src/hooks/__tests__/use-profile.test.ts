@@ -9,8 +9,9 @@ describe("useProfile", () => {
       hasCompletedOnboarding: true,
       onboardingData: {
         name: "Kacper",
+        experienceLevel: "intermediate",
         fitnessGoal: "muscle_gain",
-        focusMuscleGroups: ["chest", "back"],
+        muscleFocus: { mode: "selected", muscleGroups: ["chest", "back"] },
       },
       isHydrated: true,
     });
@@ -29,7 +30,8 @@ describe("useProfile", () => {
 
     expect(result.current.name).toBe("Kacper");
     expect(result.current.fitnessGoal).toBe("muscle_gain");
-    expect(result.current.focusMuscleGroups).toEqual(["chest", "back"]);
+    expect(result.current.experienceLevel).toBe("intermediate");
+    expect(result.current.muscleFocus).toEqual({ mode: "selected", muscleGroups: ["chest", "back"] });
     expect(result.current.isDirty).toBe(false);
 
     unmount();
@@ -68,13 +70,57 @@ describe("useProfile", () => {
     await act(async () => {
       result.current.toggleMuscleGroup("legs");
     });
-    expect(result.current.focusMuscleGroups).toEqual(["chest", "back", "legs"]);
+    expect(result.current.muscleFocus).toEqual({
+      mode: "selected",
+      muscleGroups: ["chest", "back", "legs"],
+    });
 
     // Remove chest
     await act(async () => {
       result.current.toggleMuscleGroup("chest");
     });
-    expect(result.current.focusMuscleGroups).toEqual(["back", "legs"]);
+    expect(result.current.muscleFocus).toEqual({ mode: "selected", muscleGroups: ["back", "legs"] });
+
+    unmount();
+  });
+
+  it("'Jeszcze nie wiem' replaces muscle groups and can be saved", async () => {
+    const { result, unmount } = await renderHook(() => useProfile());
+
+    await act(async () => {
+      result.current.toggleUndecidedMuscleFocus();
+    });
+    expect(result.current.muscleFocus).toEqual({ mode: "undecided" });
+    expect(result.current.isDirty).toBe(true);
+
+    let saved = false;
+    await act(async () => {
+      saved = result.current.saveProfile();
+    });
+
+    expect(saved).toBe(true);
+    expect(useOnboardingStore.getState().onboardingData?.muscleFocus).toEqual({ mode: "undecided" });
+
+    await act(async () => {
+      result.current.toggleMuscleGroup("abs");
+    });
+    expect(result.current.muscleFocus).toEqual({ mode: "selected", muscleGroups: ["abs"] });
+
+    unmount();
+  });
+
+  it("updates experience level and saves it", async () => {
+    const { result, unmount } = await renderHook(() => useProfile());
+
+    await act(async () => {
+      result.current.setExperienceLevel("advanced");
+    });
+    expect(result.current.isDirty).toBe(true);
+
+    await act(async () => {
+      result.current.saveProfile();
+    });
+    expect(useOnboardingStore.getState().onboardingData?.experienceLevel).toBe("advanced");
 
     unmount();
   });
@@ -113,7 +159,7 @@ describe("useProfile", () => {
     });
 
     expect(saved).toBe(false);
-    expect(result.current.errors.focusMuscleGroups).toBeDefined();
+    expect(result.current.errors.muscleFocus).toBeDefined();
 
     unmount();
   });

@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1789312434162,
+      "tag": "0000_init_onboarding",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789313229921,
+      "tag": "0001_experience_level_and_muscle_focus",
+      "breakpoints": true
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react-native";
 import { ProfileHeaderCard } from "../ProfileHeaderCard";
 import { ProfileNameSection } from "../ProfileNameSection";
 import { ProfileGoalSection } from "../ProfileGoalSection";
+import { ProfileExperienceSection } from "../ProfileExperienceSection";
 import { ProfileMuscleGroupsSection } from "../ProfileMuscleGroupsSection";
 import { ProfileSettingsSection } from "../ProfileSettingsSection";
 
@@ -106,7 +107,9 @@ describe("ProfileMuscleGroupsSection", () => {
     const { unmount } = await render(
       <ProfileMuscleGroupsSection
         selectedGroups={["chest", "back"]}
+        isUndecided={false}
         onToggleGroup={handleToggleGroup}
+        onToggleUndecided={jest.fn()}
       />
     );
 
@@ -125,13 +128,67 @@ describe("ProfileMuscleGroupsSection", () => {
     const { unmount } = await render(
       <ProfileMuscleGroupsSection
         selectedGroups={[]}
+        isUndecided={false}
         onToggleGroup={jest.fn()}
+        onToggleUndecided={jest.fn()}
         error="Wybierz przynajmniej jedną partię ciała"
       />
     );
 
     expect(screen.getByText("Wybierz przynajmniej jedną partię ciała")).toBeTruthy();
 
+    unmount();
+  });
+});
+
+describe("ProfileMuscleGroupsSection – Jeszcze nie wiem", () => {
+  it("renders the undecided option as checked and toggles it", async () => {
+    const handleToggleUndecided = jest.fn();
+    const { unmount } = await render(
+      <ProfileMuscleGroupsSection
+        selectedGroups={[]}
+        isUndecided
+        onToggleGroup={jest.fn()}
+        onToggleUndecided={handleToggleUndecided}
+      />
+    );
+
+    expect(screen.getByTestId("profile-muscle-focus-undecided").props.accessibilityState).toEqual({
+      checked: true,
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Jeszcze nie wiem"));
+    });
+    expect(handleToggleUndecided).toHaveBeenCalledTimes(1);
+
+    unmount();
+  });
+});
+
+describe("ProfileExperienceSection", () => {
+  it("renders levels and handles selection", async () => {
+    const handleSelect = jest.fn();
+    const { unmount } = await render(
+      <ProfileExperienceSection selectedLevel="beginner" onSelectLevel={handleSelect} />
+    );
+
+    expect(screen.getByText("Dopiero zaczynam")).toBeTruthy();
+    expect(screen.getByText("Trenuję już trochę")).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Zaawansowany"));
+    });
+    expect(handleSelect).toHaveBeenCalledWith("advanced");
+
+    unmount();
+  });
+
+  it("displays error message when provided", async () => {
+    const { unmount } = await render(
+      <ProfileExperienceSection selectedLevel={null} onSelectLevel={jest.fn()} error="Wybierz staż" />
+    );
+    expect(screen.getByText("Wybierz staż")).toBeTruthy();
     unmount();
   });
 });

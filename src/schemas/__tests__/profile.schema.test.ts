@@ -8,8 +8,9 @@ import {
 describe("ProfileFormSchema", () => {
   const validData: ProfileFormData = {
     name: "Kacper",
+    experienceLevel: "beginner",
     fitnessGoal: "muscle_gain",
-    focusMuscleGroups: ["chest", "back"],
+    muscleFocus: { mode: "selected", muscleGroups: ["chest", "back"] },
   };
 
   it("accepts valid profile form data", () => {
@@ -18,7 +19,7 @@ describe("ProfileFormSchema", () => {
     if (result.success) {
       expect(result.data.name).toBe("Kacper");
       expect(result.data.fitnessGoal).toBe("muscle_gain");
-      expect(result.data.focusMuscleGroups).toEqual(["chest", "back"]);
+      expect(result.data.muscleFocus).toEqual({ mode: "selected", muscleGroups: ["chest", "back"] });
     }
   });
 
@@ -55,12 +56,25 @@ describe("ProfileFormSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects empty focusMuscleGroups array", () => {
+  it("rejects empty selected muscle groups", () => {
     const result = ProfileFormSchema.safeParse({
       ...validData,
-      focusMuscleGroups: [],
+      muscleFocus: { mode: "selected", muscleGroups: [] },
     });
     expect(result.success).toBe(false);
+  });
+
+  it("accepts 'not sure yet' muscle focus", () => {
+    const result = ProfileFormSchema.safeParse({
+      ...validData,
+      muscleFocus: { mode: "undecided" },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing experience level", () => {
+    const { experienceLevel: _, ...rest } = validData;
+    expect(ProfileFormSchema.safeParse(rest).success).toBe(false);
   });
 
   it("rejects invalid fitnessGoal", () => {
@@ -103,8 +117,9 @@ describe("UserDataExportSchema", () => {
       exportedAt: new Date().toISOString(),
       profile: {
         name: "Kacper",
+        experienceLevel: "advanced",
         fitnessGoal: "strength",
-        focusMuscleGroups: ["chest", "legs"],
+        muscleFocus: { mode: "undecided" },
       },
       appSettings: {
         theme: "dark",

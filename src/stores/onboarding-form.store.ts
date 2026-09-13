@@ -1,5 +1,14 @@
 import { create } from "zustand";
-import type { FitnessGoal, MuscleGroup } from "@/schemas/onboarding.schema";
+import {
+  toggleMuscleGroupInFocus,
+  toggleUndecidedMuscleFocus,
+} from "@/lib/muscle-focus";
+import type {
+  ExperienceLevel,
+  FitnessGoal,
+  MuscleFocus,
+  MuscleGroup,
+} from "@/schemas/onboarding.schema";
 
 /**
  * Ephemeral store for onboarding form state shared across onboarding step screens.
@@ -8,35 +17,40 @@ import type { FitnessGoal, MuscleGroup } from "@/schemas/onboarding.schema";
  */
 interface OnboardingFormState {
   name: string;
+  experienceLevel: ExperienceLevel | null;
   fitnessGoal: FitnessGoal | null;
-  focusMuscleGroups: MuscleGroup[];
+  /** null = nothing picked yet */
+  muscleFocus: MuscleFocus | null;
 
   setName: (name: string) => void;
+  setExperienceLevel: (level: ExperienceLevel) => void;
   setGoal: (goal: FitnessGoal) => void;
   toggleMuscleGroup: (group: MuscleGroup) => void;
+  toggleUndecidedMuscleFocus: () => void;
   resetForm: () => void;
 }
 
-export const useOnboardingFormStore = create<OnboardingFormState>((set) => ({
+const INITIAL_FORM_VALUES = {
   name: "",
+  experienceLevel: null,
   fitnessGoal: null,
-  focusMuscleGroups: [],
+  muscleFocus: null,
+} satisfies Pick<OnboardingFormState, "name" | "experienceLevel" | "fitnessGoal" | "muscleFocus">;
+
+export const useOnboardingFormStore = create<OnboardingFormState>((set) => ({
+  ...INITIAL_FORM_VALUES,
 
   setName: (name: string) => set({ name }),
+
+  setExperienceLevel: (level: ExperienceLevel) => set({ experienceLevel: level }),
 
   setGoal: (goal: FitnessGoal) => set({ fitnessGoal: goal }),
 
   toggleMuscleGroup: (group: MuscleGroup) =>
-    set((state) => ({
-      focusMuscleGroups: state.focusMuscleGroups.includes(group)
-        ? state.focusMuscleGroups.filter((g) => g !== group)
-        : [...state.focusMuscleGroups, group],
-    })),
+    set((state) => ({ muscleFocus: toggleMuscleGroupInFocus(state.muscleFocus, group) })),
 
-  resetForm: () =>
-    set({
-      name: "",
-      fitnessGoal: null,
-      focusMuscleGroups: [],
-    }),
+  toggleUndecidedMuscleFocus: () =>
+    set((state) => ({ muscleFocus: toggleUndecidedMuscleFocus(state.muscleFocus) })),
+
+  resetForm: () => set(INITIAL_FORM_VALUES),
 }));

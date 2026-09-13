@@ -31,8 +31,9 @@ describe("useHomeScreen hook", () => {
       hasCompletedOnboarding: true,
       onboardingData: {
         name: "Michał",
+        experienceLevel: "beginner",
         fitnessGoal: "muscle_gain",
-        focusMuscleGroups: ["chest"],
+        muscleFocus: { mode: "selected", muscleGroups: ["chest"] },
       },
       isHydrated: true,
     });
@@ -50,8 +51,9 @@ describe("useHomeScreen hook", () => {
       hasCompletedOnboarding: true,
       onboardingData: {
         name: 12345 as unknown as string,
+        experienceLevel: "beginner",
         fitnessGoal: "corrupted_goal" as unknown as "strength",
-        focusMuscleGroups: [] as unknown as ["chest"],
+        muscleFocus: { mode: "undecided" },
       },
       isHydrated: true,
     });

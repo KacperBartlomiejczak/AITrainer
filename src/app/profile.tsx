@@ -4,9 +4,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/hooks/use-profile";
 import { Button } from "@/components/ui/button";
+import { getSelectedMuscleGroups, isUndecidedMuscleFocus } from "@/lib/muscle-focus";
+import { EXPERIENCE_LEVEL_LABELS } from "@/schemas/onboarding.schema";
 import {
   ProfileHeaderCard,
   ProfileNameSection,
+  ProfileExperienceSection,
   ProfileGoalSection,
   ProfileMuscleGroupsSection,
   ProfileSettingsSection,
@@ -17,14 +20,17 @@ export default function ProfileScreen() {
   const router = useRouter();
   const {
     name,
+    experienceLevel,
     fitnessGoal,
-    focusMuscleGroups,
+    muscleFocus,
     errors,
     isDirty,
     isSuccess,
     setName,
+    setExperienceLevel,
     setFitnessGoal,
     toggleMuscleGroup,
+    toggleUndecidedMuscleFocus,
     saveProfile,
     exportData,
     resetAllData,
@@ -79,7 +85,11 @@ export default function ProfileScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <ProfileHeaderCard name={name} streakDays={4} />
+        <ProfileHeaderCard
+          name={name}
+          streakDays={4}
+          level={experienceLevel ? EXPERIENCE_LEVEL_LABELS[experienceLevel].label : undefined}
+        />
 
         {isSuccess && (
           <View className="rounded-xl bg-[#10B981]/15 border border-[#10B981]/30 p-3 items-center">
@@ -89,6 +99,12 @@ export default function ProfileScreen() {
 
         <ProfileNameSection name={name} onChangeName={setName} error={errors.name} />
 
+        <ProfileExperienceSection
+          selectedLevel={experienceLevel}
+          onSelectLevel={setExperienceLevel}
+          error={errors.experienceLevel}
+        />
+
         <ProfileGoalSection
           selectedGoal={fitnessGoal}
           onSelectGoal={setFitnessGoal}
@@ -96,9 +112,11 @@ export default function ProfileScreen() {
         />
 
         <ProfileMuscleGroupsSection
-          selectedGroups={focusMuscleGroups}
+          selectedGroups={getSelectedMuscleGroups(muscleFocus)}
+          isUndecided={isUndecidedMuscleFocus(muscleFocus)}
           onToggleGroup={toggleMuscleGroup}
-          error={errors.focusMuscleGroups}
+          onToggleUndecided={toggleUndecidedMuscleFocus}
+          error={errors.muscleFocus}
         />
 
         <Button size="lg" onPress={saveProfile} className="w-full">

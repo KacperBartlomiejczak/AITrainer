@@ -15,8 +15,9 @@ describe("UserProfileScreen", () => {
     useOnboardingStore.setState({
       onboardingData: {
         name: "Kacper Bartłomiejczak",
+        experienceLevel: "intermediate",
         fitnessGoal: "muscle_gain",
-        focusMuscleGroups: ["chest", "back"],
+        muscleFocus: { mode: "selected", muscleGroups: ["chest", "back"] },
       },
       hasCompletedOnboarding: true,
       isHydrated: true,

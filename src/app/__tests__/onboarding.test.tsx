@@ -1,18 +1,21 @@
 import React from "react";
-import { render, screen } from "@testing-library/react-native";
+import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import StepName from "@/app/(onboarding)/step-name";
+import StepExperience from "@/app/(onboarding)/step-experience";
 import StepGoal from "@/app/(onboarding)/step-goal";
 import StepMuscleGroups from "@/app/(onboarding)/step-muscle-groups";
 import StepSummary from "@/app/(onboarding)/step-summary";
+import { useOnboardingFormStore } from "@/stores/onboarding-form.store";
 
 // Mock expo-router
+const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
     replace: jest.fn(),
     back: jest.fn(),
   }),
-  Redirect: ({ href }: { href: string }) => null,
+  Redirect: () => null,
 }));
 
 // Mock react-native-safe-area-context
@@ -21,37 +24,24 @@ jest.mock("react-native-safe-area-context", () => ({
 }));
 
 // Mock the onboarding store
+const mockCompleteOnboarding = jest.fn();
 jest.mock("@/stores/onboarding.store", () => ({
   useOnboardingStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
-      completeOnboarding: jest.fn(),
+      completeOnboarding: mockCompleteOnboarding,
       onboardingData: null,
       hasCompletedOnboarding: false,
     }),
 }));
 
-// Mock the form store with controllable state
-const mockFormState = {
-  name: "",
-  fitnessGoal: null as string | null,
-  focusMuscleGroups: [] as string[],
-  setName: jest.fn(),
-  setGoal: jest.fn(),
-  toggleMuscleGroup: jest.fn(),
-  resetForm: jest.fn(),
-};
+const initialFormState = useOnboardingFormStore.getState();
 
-jest.mock("@/stores/onboarding-form.store", () => ({
-  useOnboardingFormStore: (selector: (state: typeof mockFormState) => unknown) =>
-    selector(mockFormState),
-}));
+beforeEach(() => {
+  jest.clearAllMocks();
+  useOnboardingFormStore.setState(initialFormState, true);
+});
 
 describe("StepName", () => {
-  beforeEach(() => {
-    mockFormState.name = "";
-    mockFormState.setName = jest.fn();
-  });
-
   it("renders the name input prompt", async () => {
     await render(<StepName />);
     expect(screen.getByText("Jak masz na imię?")).toBeTruthy();
@@ -68,11 +58,46 @@ describe("StepName", () => {
   });
 });
 
+describe("StepExperience", () => {
+  it("renders the experience prompt and all levels", async () => {
+    await render(<StepExperience />);
+
+    expect(screen.getByText("Jak długo trenujesz?")).toBeTruthy();
+    expect(screen.getByText("Dopiero zaczynam")).toBeTruthy();
+    expect(screen.getByText("Trenuję już trochę")).toBeTruthy();
+    expect(screen.getByText("Zaawansowany")).toBeTruthy();
+    expect(screen.getByText("Około 5–12 miesięcy")).toBeTruthy();
+  });
+
+  it("selects a level and enables moving on", async () => {
+    await render(<StepExperience />);
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Trenuję już trochę"));
+    });
+    expect(useOnboardingFormStore.getState().experienceLevel).toBe("intermediate");
+    expect(screen.getByTestId("onboarding-option-intermediate").props.accessibilityState).toEqual({
+      selected: true,
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Dalej"));
+    });
+    expect(mockPush).toHaveBeenCalledWith("/(onboarding)/step-goal");
+  });
+
+  it("does not move on without a selection", async () => {
+    await render(<StepExperience />);
+    await act(async () => {
+      fireEvent.press(screen.getByText("Dalej"));
+    });
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+});
+
 describe("StepGoal", () => {
   beforeEach(() => {
-    mockFormState.name = "Kacper";
-    mockFormState.fitnessGoal = null;
-    mockFormState.setGoal = jest.fn();
+    useOnboardingFormStore.setState({ name: "Kacper" });
   });
 
   it("renders the goal selection prompt", async () => {
@@ -91,17 +116,12 @@ describe("StepGoal", () => {
 });
 
 describe("StepMuscleGroups", () => {
-  beforeEach(() => {
-    mockFormState.focusMuscleGroups = [];
-    mockFormState.toggleMuscleGroup = jest.fn();
-  });
-
   it("renders the muscle group selection prompt", async () => {
     await render(<StepMuscleGroups />);
     expect(screen.getByText("Na czym się skupiamy?")).toBeTruthy();
   });
 
-  it("renders all muscle group options", async () => {
+  it("renders all muscle group options and 'Jeszcze nie wiem'", async () => {
     await render(<StepMuscleGroups />);
     expect(screen.getByText("Klatka piersiowa")).toBeTruthy();
     expect(screen.getByText("Plecy")).toBeTruthy();
@@ -109,14 +129,61 @@ describe("StepMuscleGroups", () => {
     expect(screen.getByText("Barki")).toBeTruthy();
     expect(screen.getByText("Ramiona")).toBeTruthy();
     expect(screen.getByText("Brzuch")).toBeTruthy();
+    expect(screen.getByText("Jeszcze nie wiem")).toBeTruthy();
+  });
+
+  it("'Jeszcze nie wiem' unchecks selected muscle groups and vice versa", async () => {
+    await render(<StepMuscleGroups />);
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Klatka piersiowa"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Nogi"));
+    });
+    expect(screen.getByTestId("muscle-group-chest").props.accessibilityState).toEqual({ checked: true });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Jeszcze nie wiem"));
+    });
+    expect(useOnboardingFormStore.getState().muscleFocus).toEqual({ mode: "undecided" });
+    expect(screen.getByTestId("muscle-group-chest").props.accessibilityState).toEqual({ checked: false });
+    expect(screen.getByTestId("muscle-focus-undecided").props.accessibilityState).toEqual({
+      checked: true,
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Plecy"));
+    });
+    expect(useOnboardingFormStore.getState().muscleFocus).toEqual({
+      mode: "selected",
+      muscleGroups: ["back"],
+    });
+    expect(screen.getByTestId("muscle-focus-undecided").props.accessibilityState).toEqual({
+      checked: false,
+    });
+  });
+
+  it("allows moving on with only 'Jeszcze nie wiem'", async () => {
+    await render(<StepMuscleGroups />);
+    await act(async () => {
+      fireEvent.press(screen.getByText("Jeszcze nie wiem"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Dalej"));
+    });
+    expect(mockPush).toHaveBeenCalledWith("/(onboarding)/step-summary");
   });
 });
 
 describe("StepSummary", () => {
   beforeEach(() => {
-    mockFormState.name = "Kacper";
-    mockFormState.fitnessGoal = "muscle_gain";
-    mockFormState.focusMuscleGroups = ["chest", "back"];
+    useOnboardingFormStore.setState({
+      name: "Kacper",
+      experienceLevel: "advanced",
+      fitnessGoal: "muscle_gain",
+      muscleFocus: { mode: "selected", muscleGroups: ["chest", "back"] },
+    });
   });
 
   it("renders the summary with user name", async () => {
@@ -124,8 +191,31 @@ describe("StepSummary", () => {
     expect(screen.getByText(/Kacper/)).toBeTruthy();
   });
 
-  it("renders the start button", async () => {
+  it("renders experience, goal and selected muscle groups", async () => {
     await render(<StepSummary />);
-    expect(screen.getByText("Zaczynamy! 🚀")).toBeTruthy();
+    expect(screen.getByText("Zaawansowany")).toBeTruthy();
+    expect(screen.getByText("Masa mięśniowa")).toBeTruthy();
+    expect(screen.getByText("Klatka piersiowa")).toBeTruthy();
+    expect(screen.getByText("Plecy")).toBeTruthy();
+  });
+
+  it("renders 'Jeszcze nie wiem' instead of muscle groups when undecided", async () => {
+    useOnboardingFormStore.setState({ muscleFocus: { mode: "undecided" } });
+    await render(<StepSummary />);
+    expect(screen.getByText("Jeszcze nie wiem")).toBeTruthy();
+    expect(screen.queryByText("Klatka piersiowa")).toBeNull();
+  });
+
+  it("renders the start button and submits the onboarding", async () => {
+    await render(<StepSummary />);
+    await act(async () => {
+      fireEvent.press(screen.getByText("Zaczynamy! 🚀"));
+    });
+    expect(mockCompleteOnboarding).toHaveBeenCalledWith({
+      name: "Kacper",
+      experienceLevel: "advanced",
+      fitnessGoal: "muscle_gain",
+      muscleFocus: { mode: "selected", muscleGroups: ["chest", "back"] },
+    });
   });
 });
