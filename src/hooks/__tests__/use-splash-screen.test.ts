@@ -29,6 +29,11 @@ jest.mock("react-native-reanimated", () => {
       ease: {},
       cubic: {},
     },
+    configureReanimatedLogger: jest.fn(),
+    ReanimatedLogLevel: {
+      warn: 1,
+      error: 2,
+    },
   };
 });
 
