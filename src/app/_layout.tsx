@@ -1,17 +1,35 @@
+import { resolveOnboardingRedirect } from "@/lib/onboarding-redirect";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreenModule from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { View } from "react-native";
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from "react-native-reanimated";
 import "./global.css";
 import SplashScreen from "./splash";
+
+// Disable Reanimated strict mode to prevent false-positive warnings during React 19 render & unmount cycles
+// Refer to: https://docs.swmansion.com/react-native-reanimated/docs/debugging/logger-configuration
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
 
 // Keep native splash screen visible while JS bundle initializes.
 // Safe catch prevents unhandled rejection if already called.
 SplashScreenModule.preventAutoHideAsync().catch(() => {
   /* ignore already prevented */
 });
+
+// Force the initial route to "/" so Expo Router doesn't restore a cached
+// deep-link (e.g. /ranking) before NavigationContainer is fully mounted.
+export const unstable_settings = {
+  initialRouteName: "index",
+};
 
 export default function RootLayout() {
   const router = useRouter();
@@ -21,7 +39,7 @@ export default function RootLayout() {
     (s) => s.hasCompletedOnboarding,
   );
 
-  const [showSplashOverlay, setShowSplashOverlay] = useState<boolean>(true);
+  const [showSplash, setShowSplash] = useState<boolean>(true);
 
   const onLayoutRootView = useCallback(async () => {
     try {
@@ -33,44 +51,25 @@ export default function RootLayout() {
   }, []);
 
   const handleSplashFinish = useCallback(() => {
-    setShowSplashOverlay(false);
+    setShowSplash(false);
   }, []);
 
-  const currentSegments = segments as string[];
-  const segmentsKey = currentSegments.join("/");
-  const onSplash = currentSegments.includes("splash");
-  const isSplashOverlayActive = showSplashOverlay && !onSplash;
+  const segmentsKey = (segments as string[]).join("/");
+  const onSplash = (segments as string[]).includes("splash");
+  const isSplashActive = showSplash && !onSplash;
 
-  useLayoutEffect(() => {
-    console.log("[nav-effect]", {
+  useEffect(() => {
+    const target = resolveOnboardingRedirect({
       isHydrated,
-      isSplashOverlayActive,
+      isSplashActive,
       hasCompletedOnboarding,
-      currentSegments,
-      onSplash,
+      segments: segmentsKey ? segmentsKey.split("/") : [],
     });
-    // Only navigate after store is hydrated and splash overlay completes
-    if (!isHydrated || isSplashOverlayActive) return;
 
-    // Check if the user is currently within any onboarding step
-    const inOnboarding = currentSegments.some(
-      (s) => s.startsWith("step-") || s === "(onboarding)",
-    );
-
-    if (!hasCompletedOnboarding && !inOnboarding && !onSplash) {
-      router.replace("/(onboarding)/step-name");
-    } else if (hasCompletedOnboarding && (inOnboarding || onSplash)) {
-      router.replace("/");
+    if (target) {
+      router.replace(target);
     }
-  }, [
-    isHydrated,
-    isSplashOverlayActive,
-    hasCompletedOnboarding,
-    currentSegments,
-    onSplash,
-    router,
-    segmentsKey,
-  ]);
+  }, [isHydrated, isSplashActive, hasCompletedOnboarding, router, segmentsKey]);
 
   return (
     <View className="flex-1 bg-black" onLayout={onLayoutRootView}>
@@ -83,8 +82,8 @@ export default function RootLayout() {
         }}
       />
 
-      {/* Smooth animated splash overlay on cold start (skip if user is directly on /splash route to prevent duplicate mount) */}
-      {(!isHydrated || showSplashOverlay) && !onSplash && (
+      {/* Warunkowe wyświetlanie splash screen (skip if user is directly on /splash route) */}
+      {showSplash && !onSplash && (
         <SplashScreen
           isOverlay
           durationMs={1600}
@@ -94,3 +93,4 @@ export default function RootLayout() {
     </View>
   );
 }
+

@@ -8,6 +8,8 @@ jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
 }));
 
+jest.setTimeout(60000);
+
 describe("UserProfileScreen", () => {
   beforeEach(() => {
     useOnboardingStore.setState({

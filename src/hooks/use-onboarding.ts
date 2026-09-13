@@ -75,13 +75,13 @@ export function useOnboarding(currentStep: number = 0) {
     const result = OnboardingFormSchema.safeParse(formData);
 
     if (result.success) {
+      // RootLayout's onboarding guard redirects to home once the store flips
       completeOnboarding(result.data);
       resetForm();
-      router.replace("/");
     } else {
       console.warn("Onboarding validation failed:", result.error);
     }
-  }, [name, fitnessGoal, focusMuscleGroups, completeOnboarding, resetForm, router]);
+  }, [name, fitnessGoal, focusMuscleGroups, completeOnboarding, resetForm]);
 
   return {
     currentStep,

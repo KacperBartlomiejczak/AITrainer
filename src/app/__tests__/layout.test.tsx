@@ -29,6 +29,11 @@ jest.mock("react-native-reanimated", () => {
       ease: {},
       cubic: {},
     },
+    configureReanimatedLogger: jest.fn(),
+    ReanimatedLogLevel: {
+      warn: 1,
+      error: 2,
+    },
   };
 });
 
@@ -211,5 +216,33 @@ describe("RootLayout", () => {
     });
 
     expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it("redirects to / exactly once after onboarding completes and stops once home is reached", async () => {
+    mockStoreState = {
+      isHydrated: true,
+      hasCompletedOnboarding: false,
+    };
+    mockSegments = ["(onboarding)", "step-summary"];
+
+    const { rerender } = await render(<RootLayout />);
+
+    await act(async () => {
+      jest.advanceTimersByTime(1600);
+    });
+    expect(mockReplace).not.toHaveBeenCalled();
+
+    // User taps "Zaczynamy!" -> store marks onboarding as completed
+    mockStoreState = { isHydrated: true, hasCompletedOnboarding: true };
+    await rerender(<RootLayout />);
+
+    expect(mockReplace).toHaveBeenCalledTimes(1);
+    expect(mockReplace).toHaveBeenCalledWith("/");
+
+    // Router lands on home -> guard must not navigate again
+    mockSegments = [];
+    await rerender(<RootLayout />);
+
+    expect(mockReplace).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, Text, View } from "react-native";
-import { Home, Dumbbell, User } from "lucide-react-native";
+import { Home, Dumbbell, User, Trophy } from "lucide-react-native";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/schemas/navigation.schema";
 
@@ -20,6 +20,8 @@ export function PillNavItem({ item, isActive, onPress }: PillNavItemProps) {
         return <Home size={iconSize} color={iconColor} strokeWidth={isActive ? 2.5 : 2} />;
       case "Dumbbell":
         return <Dumbbell size={iconSize} color={iconColor} strokeWidth={isActive ? 2.5 : 2} />;
+      case "Trophy":
+        return <Trophy size={iconSize} color={iconColor} strokeWidth={isActive ? 2.5 : 2} />;
       case "User":
         return <User size={iconSize} color={iconColor} strokeWidth={isActive ? 2.5 : 2} />;
     }
@@ -33,7 +35,7 @@ export function PillNavItem({ item, isActive, onPress }: PillNavItemProps) {
       accessibilityLabel={item.label}
       onPress={onPress}
       className={cn(
-        "flex-1 flex-row items-center justify-center py-2.5 px-3 rounded-full gap-2 transition-all active:scale-95",
+        "flex-1 flex-row items-center justify-center py-2 px-2 rounded-full gap-1.5 transition-all active:scale-95",
         isActive ? "bg-[#007AFF] shadow-md shadow-[#007AFF]/30" : "bg-transparent"
       )}
     >

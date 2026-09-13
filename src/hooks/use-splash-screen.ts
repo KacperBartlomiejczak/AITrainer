@@ -135,7 +135,17 @@ export function useSplashScreen({
       clearTimeout(fadeTimer);
       clearTimeout(completeTimer);
     };
-  }, [config.durationMs, isReducedMotion, containerOpacity, loaderOpacity, logoOpacity, logoScale, subtitleOpacity, titleOpacity]);
+  }, [
+    config.durationMs,
+    isReducedMotion,
+    containerOpacity,
+    loaderOpacity,
+    logoOpacity,
+    logoScale,
+    subtitleOpacity,
+    titleOpacity,
+  ]);
+
 
   // ── Navigation & Completion Effect (Gated on isHydrated) ──
   useEffect(() => {

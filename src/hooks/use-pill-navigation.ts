@@ -22,6 +22,13 @@ export const DEFAULT_NAV_TABS: NavTabList = [
     testID: "pill-nav-workouts",
   },
   {
+    id: "ranking",
+    label: "Ranking",
+    iconName: "Trophy",
+    route: "/ranking",
+    testID: "pill-nav-ranking",
+  },
+  {
     id: "profile",
     label: "Profil",
     iconName: "User",
@@ -43,6 +50,9 @@ export function usePillNavigation(overrideTab?: NavTabId) {
     if (overrideTab) return overrideTab;
     if (pathname === "/workouts" || pathname.startsWith("/workout")) {
       return "workouts";
+    }
+    if (pathname === "/ranking") {
+      return "ranking";
     }
     if (pathname === "/user-profile" || pathname === "/profile") {
       return "profile";

@@ -190,7 +190,7 @@ describe("useOnboarding", () => {
     expect(mockBack).not.toHaveBeenCalled();
   });
 
-  it("submitOnboarding completes onboarding and redirects to home", async () => {
+  it("submitOnboarding completes onboarding and leaves navigation to the root guard", async () => {
     mockFormStoreState.name = "Kacper";
     mockFormStoreState.fitnessGoal = "strength";
     mockFormStoreState.focusMuscleGroups = ["chest"];
@@ -204,6 +204,19 @@ describe("useOnboarding", () => {
       focusMuscleGroups: ["chest"],
     });
     expect(mockResetForm).toHaveBeenCalled();
-    expect(mockReplace).toHaveBeenCalledWith("/");
+    // RootLayout guard is the single source of truth for the redirect to home
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it("submitOnboarding does not complete onboarding when goal is missing", async () => {
+    mockFormStoreState.name = "Kacper";
+    mockFormStoreState.fitnessGoal = null;
+    mockFormStoreState.focusMuscleGroups = ["chest"];
+
+    const { result } = await renderHook(() => useOnboarding(3));
+    result.current.submitOnboarding();
+
+    expect(mockCompleteOnboarding).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });
