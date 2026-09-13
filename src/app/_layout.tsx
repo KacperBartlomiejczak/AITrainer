@@ -1,10 +1,10 @@
-import "./global.css";
-import React, { useCallback, useState, useLayoutEffect } from "react";
-import { Stack, useRouter, useSegments } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
-import * as SplashScreenModule from "expo-splash-screen";
 import { useOnboardingStore } from "@/stores/onboarding.store";
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreenModule from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useCallback, useLayoutEffect, useState } from "react";
+import { View } from "react-native";
+import "./global.css";
 import SplashScreen from "./splash";
 
 // Keep native splash screen visible while JS bundle initializes.
@@ -18,7 +18,7 @@ export default function RootLayout() {
   const segments = useSegments();
   const isHydrated = useOnboardingStore((s) => s.isHydrated);
   const hasCompletedOnboarding = useOnboardingStore(
-    (s) => s.hasCompletedOnboarding
+    (s) => s.hasCompletedOnboarding,
   );
 
   const [showSplashOverlay, setShowSplashOverlay] = useState<boolean>(true);
@@ -37,16 +37,24 @@ export default function RootLayout() {
   }, []);
 
   const currentSegments = segments as string[];
+  const segmentsKey = currentSegments.join("/");
   const onSplash = currentSegments.includes("splash");
   const isSplashOverlayActive = showSplashOverlay && !onSplash;
 
   useLayoutEffect(() => {
+    console.log("[nav-effect]", {
+      isHydrated,
+      isSplashOverlayActive,
+      hasCompletedOnboarding,
+      currentSegments,
+      onSplash,
+    });
     // Only navigate after store is hydrated and splash overlay completes
     if (!isHydrated || isSplashOverlayActive) return;
 
     // Check if the user is currently within any onboarding step
     const inOnboarding = currentSegments.some(
-      (s) => s.startsWith("step-") || s === "(onboarding)"
+      (s) => s.startsWith("step-") || s === "(onboarding)",
     );
 
     if (!hasCompletedOnboarding && !inOnboarding && !onSplash) {
@@ -61,6 +69,7 @@ export default function RootLayout() {
     currentSegments,
     onSplash,
     router,
+    segmentsKey,
   ]);
 
   return (

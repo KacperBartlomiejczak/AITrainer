@@ -1,0 +1,51 @@
+import React from "react";
+import { View, Text, ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRoutines } from "@/hooks/use-routines";
+import {
+  ExercisesHeroBanner,
+  RoutineListSection,
+} from "@/components/workouts";
+import { PillNavbar } from "@/components/navigation";
+
+export default function WorkoutsScreen() {
+  const insets = useSafeAreaInsets();
+  const { filteredRoutines, startRoutine, openAllExercises } = useRoutines();
+
+  return (
+    <View className="flex-1 bg-black">
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: Math.max(insets.top, 16),
+          paddingBottom: Math.max(insets.bottom, 24) + 80,
+          paddingHorizontal: 16,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="flex-col gap-8">
+          {/* Header */}
+          <View className="flex-col gap-1">
+            <Text className="text-2xl font-black text-white tracking-tight">
+              Treningi & Rutyny 🏋️
+            </Text>
+            <Text className="text-xs text-[#71717A]">
+              Eksploruj gotowe plany lub przeglądaj pełną bazę ćwiczeń
+            </Text>
+          </View>
+
+          {/* Hero Banner with "Pokaż wszystkie ćwiczenia" button */}
+          <ExercisesHeroBanner onPressShowAll={openAllExercises} />
+
+          {/* Routines List */}
+          <RoutineListSection
+            routines={filteredRoutines}
+            onStartRoutine={startRoutine}
+          />
+        </View>
+      </ScrollView>
+
+      {/* Floating Pill Navigation */}
+      <PillNavbar activeTab="workouts" />
+    </View>
+  );
+}
