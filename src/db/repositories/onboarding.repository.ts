@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import type { ZodError } from "zod";
 import { getSelectedMuscleGroups } from "@/lib/muscle-focus";
 import {
   LOCAL_USER_ID,
@@ -15,6 +15,7 @@ import {
 } from "@/schemas/onboarding.schema";
 import { userFocusMuscleGroups, userProfiles } from "../schema";
 import type { AppDatabase } from "../types";
+import { parseOrThrow } from "./parse-or-throw";
 
 export interface OnboardingRepository {
   /** Completed onboarding for the user, or null when missing / unreadable. */
@@ -30,17 +31,14 @@ export interface OnboardingRepositoryOptions {
   now?: () => Date;
 }
 
+/** Path + code per issue, safe to log — never the underlying user data. */
+function summarizeIssues(error: ZodError): { path: string; code: string }[] {
+  return error.issues.map((issue) => ({ path: issue.path.join("."), code: issue.code }));
+}
+
 /** Muscle groups deduplicated and ordered like `MuscleGroupSchema` for stable reads/writes. */
 function toCanonicalMuscleGroups(groups: readonly MuscleGroup[]): MuscleGroup[] {
   return MuscleGroupSchema.options.filter((group) => groups.includes(group));
-}
-
-function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, label: string): T {
-  const result = schema.safeParse(value);
-  if (!result.success) {
-    throw new Error(`[db] Invalid ${label}: ${z.prettifyError(result.error)}`);
-  }
-  return result.data;
 }
 
 export function createOnboardingRepository(
@@ -63,8 +61,8 @@ export function createOnboardingRepository(
       const muscleGroups = UserFocusMuscleGroupRowListSchema.safeParse(rawMuscleGroups);
       if (!profile.success || !muscleGroups.success) {
         console.warn("[db] Stored onboarding rows failed validation", {
-          raw: rawProfile,
-          rawMuscleGroups,
+          profileIssues: profile.success ? [] : summarizeIssues(profile.error),
+          muscleGroupIssues: muscleGroups.success ? [] : summarizeIssues(muscleGroups.error),
         });
         return null;
       }
@@ -85,8 +83,7 @@ export function createOnboardingRepository(
       });
       if (!onboarding.success) {
         console.warn("[db] Stored onboarding is incomplete", {
-          raw: rawProfile,
-          rawMuscleGroups,
+          issues: summarizeIssues(onboarding.error),
         });
         return null;
       }

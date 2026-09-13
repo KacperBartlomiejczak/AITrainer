@@ -15,96 +15,96 @@ export const EXERCISE_ASSET_MAP: Record<string, ExerciseMediaItem> = {
     image: require("@/assets/images/0047-3TZduzM.jpg"),
     gif: require("@/assets/videos/0047-3TZduzM.gif"),
   },
-  "0033": {
-    image: require("@/assets/images/0033-GrO65fd.jpg"),
-    gif: require("@/assets/videos/0033-GrO65fd.gif"),
+  "1311": {
+    image: require("@/assets/images/1311-JmMVpR3.jpg"),
+    gif: require("@/assets/videos/1311-JmMVpR3.gif"),
   },
-  "0035": {
-    image: require("@/assets/images/0035-LMGXZn8.jpg"),
-    gif: require("@/assets/videos/0035-LMGXZn8.gif"),
+  "0289": {
+    image: require("@/assets/images/0289-SpYC0Kp.jpg"),
+    gif: require("@/assets/videos/0289-SpYC0Kp.gif"),
   },
-  "0022": {
-    image: require("@/assets/images/0022-znLogoF.jpg"),
-    gif: require("@/assets/videos/0022-znLogoF.gif"),
+  "0251": {
+    image: require("@/assets/images/0251-9WTm7dq.jpg"),
+    gif: require("@/assets/videos/0251-9WTm7dq.gif"),
   },
-  "0036": {
-    image: require("@/assets/images/0036-hl8DUh8.jpg"),
-    gif: require("@/assets/videos/0036-hl8DUh8.gif"),
+  "0308": {
+    image: require("@/assets/images/0308-yz9nUhF.jpg"),
+    gif: require("@/assets/videos/0308-yz9nUhF.gif"),
   },
   // ── BACK ──────────────────────────────────────────────────
-  "0007": {
-    image: require("@/assets/images/0007-4IKbhHV.jpg"),
-    gif: require("@/assets/videos/0007-4IKbhHV.gif"),
+  "0198": {
+    image: require("@/assets/images/0198-RVwzP10.jpg"),
+    gif: require("@/assets/videos/0198-RVwzP10.gif"),
   },
-  "0026": {
-    image: require("@/assets/images/0026-W9pFVv1.jpg"),
-    gif: require("@/assets/videos/0026-W9pFVv1.gif"),
+  "0027": {
+    image: require("@/assets/images/0027-eZyBC3j.jpg"),
+    gif: require("@/assets/videos/0027-eZyBC3j.gif"),
   },
-  "0030": {
-    image: require("@/assets/images/0030-J6Dx1Mu.jpg"),
-    gif: require("@/assets/videos/0030-J6Dx1Mu.gif"),
+  "0652": {
+    image: require("@/assets/images/0652-lBDjFxJ.jpg"),
+    gif: require("@/assets/videos/0652-lBDjFxJ.gif"),
   },
-  "0031": {
-    image: require("@/assets/images/0031-25GPyDY.jpg"),
-    gif: require("@/assets/videos/0031-25GPyDY.gif"),
+  "0292": {
+    image: require("@/assets/images/0292-C0MA9bC.jpg"),
+    gif: require("@/assets/videos/0292-C0MA9bC.gif"),
+  },
+  "0180": {
+    image: require("@/assets/images/0180-hvV79Si.jpg"),
+    gif: require("@/assets/videos/0180-hvV79Si.gif"),
   },
   "0032": {
     image: require("@/assets/images/0032-ila4NZS.jpg"),
     gif: require("@/assets/videos/0032-ila4NZS.gif"),
-  },
-  "0034": {
-    image: require("@/assets/images/0034-hMEptv0.jpg"),
-    gif: require("@/assets/videos/0034-hMEptv0.gif"),
   },
   // ── UPPER LEGS ────────────────────────────────────────────
   "0043": {
     image: require("@/assets/images/0043-qXTaZnJ.jpg"),
     gif: require("@/assets/videos/0043-qXTaZnJ.gif"),
   },
-  "0053": {
-    image: require("@/assets/images/0053-1gFNTZV.jpg"),
-    gif: require("@/assets/videos/0053-1gFNTZV.gif"),
+  "0514": {
+    image: require("@/assets/images/0514-LIlE5Tn.jpg"),
+    gif: require("@/assets/videos/0514-LIlE5Tn.gif"),
   },
-  "0045": {
-    image: require("@/assets/images/0045-GXoaSgn.jpg"),
-    gif: require("@/assets/videos/0045-GXoaSgn.gif"),
+  "0054": {
+    image: require("@/assets/images/0054-t8iSghb.jpg"),
+    gif: require("@/assets/videos/0054-t8iSghb.gif"),
   },
-  "0046": {
-    image: require("@/assets/images/0046-5VCj6iH.jpg"),
-    gif: require("@/assets/videos/0046-5VCj6iH.gif"),
+  "0585": {
+    image: require("@/assets/images/0585-my33uHU.jpg"),
+    gif: require("@/assets/videos/0585-my33uHU.gif"),
   },
-  "0048": {
-    image: require("@/assets/images/0048-641mIfk.jpg"),
-    gif: require("@/assets/videos/0048-641mIfk.gif"),
+  "0586": {
+    image: require("@/assets/images/0586-17lJ1kr.jpg"),
+    gif: require("@/assets/videos/0586-17lJ1kr.gif"),
   },
-  "0049": {
-    image: require("@/assets/images/0049-dmgMp3n.jpg"),
-    gif: require("@/assets/videos/0049-dmgMp3n.gif"),
+  "3013": {
+    image: require("@/assets/images/3013-u0cNiij.jpg"),
+    gif: require("@/assets/videos/3013-u0cNiij.gif"),
   },
   // ── UPPER ARMS ────────────────────────────────────────────
   "0070": {
     image: require("@/assets/images/0070-qOgPVf6.jpg"),
     gif: require("@/assets/videos/0070-qOgPVf6.gif"),
   },
-  "0072": {
-    image: require("@/assets/images/0072-WLvTAv5.jpg"),
-    gif: require("@/assets/videos/0072-WLvTAv5.gif"),
+  "0285": {
+    image: require("@/assets/images/0285-BU15nH4.jpg"),
+    gif: require("@/assets/videos/0285-BU15nH4.gif"),
   },
-  "0073": {
-    image: require("@/assets/images/0073-i6LWjok.jpg"),
-    gif: require("@/assets/videos/0073-i6LWjok.gif"),
+  "0201": {
+    image: require("@/assets/images/0201-3ZflifB.jpg"),
+    gif: require("@/assets/videos/0201-3ZflifB.gif"),
   },
-  "0074": {
-    image: require("@/assets/images/0074-za9Ni4z.jpg"),
-    gif: require("@/assets/videos/0074-za9Ni4z.gif"),
+  "0129": {
+    image: require("@/assets/images/0129-RrLske5.jpg"),
+    gif: require("@/assets/videos/0129-RrLske5.gif"),
   },
-  "0075": {
-    image: require("@/assets/images/0075-Ln9iTbU.jpg"),
-    gif: require("@/assets/videos/0075-Ln9iTbU.gif"),
+  "0030": {
+    image: require("@/assets/images/0030-J6Dx1Mu.jpg"),
+    gif: require("@/assets/videos/0030-J6Dx1Mu.gif"),
   },
-  "0076": {
-    image: require("@/assets/images/0076-S9zHIvU.jpg"),
-    gif: require("@/assets/videos/0076-S9zHIvU.gif"),
+  "0313": {
+    image: require("@/assets/images/0313-slDvUAU.jpg"),
+    gif: require("@/assets/videos/0313-slDvUAU.gif"),
   },
   // ── SHOULDERS ─────────────────────────────────────────────
   "0977": {

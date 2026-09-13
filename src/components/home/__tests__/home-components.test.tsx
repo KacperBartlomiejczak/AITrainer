@@ -6,6 +6,8 @@ import { TodayWorkoutCard } from "../TodayWorkoutCard";
 import { WeeklyProgressCard } from "../WeeklyProgressCard";
 import { QuickActionsGrid } from "../QuickActionsGrid";
 import { RecentActivitySection } from "../RecentActivitySection";
+import { FriendsWorkoutFeed } from "../FriendsWorkoutFeed";
+import { MOCK_FRIENDS_FEED } from "@/lib/mock-friends-feed";
 
 describe("Home Screen Components", () => {
   const mockUser = {
@@ -117,19 +119,62 @@ describe("Home Screen Components", () => {
     expect(onSelectMock).toHaveBeenCalledWith("/workout/active");
   });
 
-  it("renders RecentActivitySection with volume and PR badge", async () => {
+  it("renders RecentActivitySection with duration, completed exercises and the workout photo", async () => {
     const mockActivity = {
-      id: "rec_1",
-      title: "Plecy + Biceps",
+      id: "wks_1",
+      title: "FBW B — Całe ciało",
       completedAt: "Wczoraj, 19:15",
       durationMinutes: 58,
-      totalVolumeKg: 4850,
-      personalRecordsCount: 2,
+      completedExerciseCount: 4,
+      totalExerciseCount: 5,
+      photoUri: "file:///document/workout-photos/wks_1-1.jpg",
     };
 
     await render(<RecentActivitySection activity={mockActivity} />);
-    expect(screen.getByText("Plecy + Biceps")).toBeTruthy();
-    expect(screen.getByText("🏆 2 PR")).toBeTruthy();
+    expect(screen.getByText("FBW B — Całe ciało")).toBeTruthy();
     expect(screen.getByText("58 min")).toBeTruthy();
+    expect(screen.getByText("4/5 ćwiczeń")).toBeTruthy();
+    expect(screen.getByTestId("recent-activity-photo").props.source).toEqual({ uri: mockActivity.photoUri });
+  });
+
+  it("renders RecentActivitySection without a photo when the workout has none", async () => {
+    await render(
+      <RecentActivitySection
+        activity={{
+          id: "wks_2",
+          title: "FBW A — Całe ciało",
+          completedAt: "Dziś, 08:00",
+          durationMinutes: 40,
+          completedExerciseCount: 5,
+          totalExerciseCount: 5,
+          photoUri: null,
+        }}
+      />,
+    );
+    expect(screen.getByText("FBW A — Całe ciało")).toBeTruthy();
+    expect(screen.queryByTestId("recent-activity-photo")).toBeNull();
+  });
+
+  it("renders an empty RecentActivitySection for a user without workouts", async () => {
+    await render(<RecentActivitySection activity={null} />);
+    expect(screen.getByTestId("recent-activity-empty")).toBeTruthy();
+    expect(screen.getByText("Brak treningów")).toBeTruthy();
+  });
+
+  it("renders the friends feed with photos, highlights and reactions", async () => {
+    await render(<FriendsWorkoutFeed items={[...MOCK_FRIENDS_FEED]} />);
+
+    expect(screen.getByText("Treningi Znajomych")).toBeTruthy();
+    expect(screen.getByText("Ola Nowak")).toBeTruthy();
+    expect(screen.getByText("Pierwszy raz przysiad z 60 kg! 🎉")).toBeTruthy();
+    expect(screen.getByTestId("friend-feed-photo-feed_ola_01")).toBeTruthy();
+    expect(screen.queryByTestId("friend-feed-photo-feed_kasia_01")).toBeNull();
+    expect(screen.getByText("❤️ 14")).toBeTruthy();
+    expect(screen.getByText("48 min • 5 ćwiczeń")).toBeTruthy();
+  });
+
+  it("renders nothing for an empty friends feed", async () => {
+    await render(<FriendsWorkoutFeed items={[]} />);
+    expect(screen.queryByText("Treningi Znajomych")).toBeNull();
   });
 });

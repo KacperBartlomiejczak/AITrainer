@@ -6,6 +6,7 @@ import {
 } from "@/schemas/user-profile-screen.schema";
 import {
   MUSCLE_BENCHMARK_CONFIGS,
+  calculateMuscleLeague,
   calculateNextLeagueProgress,
   calculateOverallRank,
   type RankingMuscleGroup,
@@ -190,25 +191,38 @@ export function useRankingScreen() {
     return calculateOverallRank(muscleRecords);
   }, [muscleRecords]);
 
+const LEAGUE_SHORT_NAMES: Record<StrengthLeagueId, string> = {
+  bronze: "Brąz",
+  silver: "Srebro",
+  gold: "Złoto",
+  platinum: "Platyna",
+  diamond: "Diament",
+  master: "Mistrz",
+  titan: "Tytan",
+};
+
   const leaderboard = useMemo<LeaderboardUser[]>(() => {
-    return DEFAULT_LEADERBOARD_USERS.map((user) => {
+    const chestLeague = calculateMuscleLeague("chest", muscleRecords.chest);
+    const updatedUsers = DEFAULT_LEADERBOARD_USERS.map((user) => {
       if (user.isCurrentUser) {
         return {
           ...user,
           displayName: `${userDisplayName} (Ty)`,
           league: overallRank.overallLeague,
           totalScore: overallRank.totalScore,
-          topRecordSummary: `${muscleRecords.chest} kg (${selectedMuscleRank.league.name.replace(" Liga", "")})`,
+          topRecordSummary: `${muscleRecords.chest} kg (${LEAGUE_SHORT_NAMES[chestLeague.id]})`,
         };
       }
       return user;
     });
-  }, [
-    userDisplayName,
-    overallRank,
-    muscleRecords.chest,
-    selectedMuscleRank.league.name,
-  ]);
+
+    return [...updatedUsers]
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .map((user, index) => ({
+        ...user,
+        rank: index + 1,
+      }));
+  }, [userDisplayName, overallRank, muscleRecords.chest]);
 
   const filteredLeaderboard = useMemo(() => {
     if (selectedLeagueFilter === "all") return leaderboard;

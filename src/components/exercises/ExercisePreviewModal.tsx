@@ -1,8 +1,11 @@
 import React from "react";
-import { Modal, View, Text, Image, Pressable, ScrollView } from "react-native";
-import { X, Dumbbell, Target, ChevronRight } from "lucide-react-native";
+import { Modal, View, Text, Pressable, ScrollView } from "react-native";
+import { X, Target } from "lucide-react-native";
 import { getExerciseMedia } from "@/lib/exercise-assets";
 import type { CatalogExercise } from "@/schemas/exercise-catalog.schema";
+import { ExerciseMediaPreview } from "./ExerciseMediaPreview";
+import { ExercisePreviewMuscles } from "./ExercisePreviewMuscles";
+import { ExercisePreviewSteps } from "./ExercisePreviewSteps";
 
 interface ExercisePreviewModalProps {
   exercise: CatalogExercise | null;
@@ -10,36 +13,14 @@ interface ExercisePreviewModalProps {
   onClose: () => void;
 }
 
-const MUSCLE_LABEL: Record<string, string> = {
-  chest: "Klatka",
-  back: "Plecy",
-  "upper legs": "Nogi",
-  "upper arms": "Ramiona",
-  shoulders: "Barki",
-  waist: "Brzuch",
-  cardio: "Cardio",
-  "lower legs": "Łydki",
-  "lower arms": "Przedramiona",
-  biceps: "Biceps",
-  triceps: "Triceps",
-  quadriceps: "Czworogłowe",
-  hamstrings: "Dwugłowe uda",
-  glutes: "Pośladki",
-  calves: "Łydki",
-  abs: "Brzuch",
-  lats: "Najszersze grzbietu",
-  "upper back": "Górne plecy",
-  "lower back": "Dolne plecy",
-  delts: "Deltoid",
-  obliques: "Skośne",
-  core: "Core",
-  forearms: "Przedramiona",
-  trapezius: "Czworoboczny",
-  pectorals: "Mięsień piersiowy",
-};
-
-function getMuscleLabel(muscle: string): string {
-  return MUSCLE_LABEL[muscle.toLowerCase()] ?? muscle;
+function getExerciseSteps(exercise: CatalogExercise): string[] {
+  if (exercise.instructionStepsPl && exercise.instructionStepsPl.length > 0) {
+    return exercise.instructionStepsPl;
+  }
+  return exercise.instructionsPl
+    .split(/\. /)
+    .filter((s) => s.trim().length > 0)
+    .map((s) => (s.endsWith(".") ? s : s + "."));
 }
 
 export function ExercisePreviewModal({
@@ -49,14 +30,6 @@ export function ExercisePreviewModal({
 }: ExercisePreviewModalProps) {
   if (!exercise) return null;
   const media = getExerciseMedia(exercise.id);
-
-  const steps =
-    exercise.instructionStepsPl && exercise.instructionStepsPl.length > 0
-      ? exercise.instructionStepsPl
-      : exercise.instructionsPl
-          .split(/\. /)
-          .filter((s) => s.trim().length > 0)
-          .map((s) => (s.endsWith(".") ? s : s + "."));
 
   return (
     <Modal
@@ -99,77 +72,12 @@ export function ExercisePreviewModal({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, gap: 16 }}
           >
-            {/* GIF Preview */}
-            {media && (
-              <View className="w-full rounded-2xl bg-[#111113] overflow-hidden border border-[#27272A] items-center justify-center"
-                style={{ height: 220 }}>
-                <Image
-                  source={media.gif}
-                  className="w-full h-full"
-                  resizeMode="contain"
-                />
-              </View>
-            )}
-
-            {/* Muscle groups */}
-            <View className="gap-2">
-              <View className="flex-row items-center gap-1.5">
-                <Dumbbell size={13} color="#A1A1AA" />
-                <Text className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider">
-                  Partie mięśniowe
-                </Text>
-              </View>
-
-              <View className="flex-row flex-wrap gap-2">
-                {/* Primary */}
-                <View className="flex-row items-center gap-1.5 bg-[#007AFF]/15 border border-[#007AFF]/30 px-3 py-1.5 rounded-full">
-                  <View className="w-1.5 h-1.5 rounded-full bg-[#007AFF]" />
-                  <Text className="text-[11px] font-bold text-[#007AFF]">
-                    {getMuscleLabel(exercise.muscleGroup)}
-                  </Text>
-                </View>
-
-                {/* Secondary */}
-                {(exercise.secondaryMuscles ?? []).slice(0, 4).map((muscle) => (
-                  <View
-                    key={muscle}
-                    className="bg-[#1E1E22] border border-[#27272A] px-3 py-1.5 rounded-full"
-                  >
-                    <Text className="text-[11px] text-[#A1A1AA]">
-                      {getMuscleLabel(muscle)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Step-by-step instructions */}
-            <View className="gap-2">
-              <View className="flex-row items-center gap-1.5">
-                <ChevronRight size={13} color="#A1A1AA" />
-                <Text className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider">
-                  Technika wykonania
-                </Text>
-              </View>
-
-              <View className="gap-2">
-                {steps.map((step, index) => (
-                  <View
-                    key={index}
-                    className="flex-row gap-3 bg-[#111113] border border-[#1E1E22] rounded-xl p-3"
-                  >
-                    <View className="w-5 h-5 rounded-full bg-[#007AFF]/20 items-center justify-center mt-0.5 shrink-0">
-                      <Text className="text-[10px] font-black text-[#007AFF]">
-                        {index + 1}
-                      </Text>
-                    </View>
-                    <Text className="flex-1 text-xs text-[#D4D4D8] leading-relaxed">
-                      {step}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+            <ExerciseMediaPreview media={media} />
+            <ExercisePreviewMuscles
+              muscleGroup={exercise.muscleGroup}
+              secondaryMuscles={exercise.secondaryMuscles ?? []}
+            />
+            <ExercisePreviewSteps steps={getExerciseSteps(exercise)} />
           </ScrollView>
 
           {/* CTA */}

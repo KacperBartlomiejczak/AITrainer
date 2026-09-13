@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, Image } from "react-native";
-import { getExerciseMedia } from "@/lib/exercise-assets";
 import type { CompletedWorkoutDetail } from "@/schemas/user-profile-screen.schema";
 
 interface WorkoutCoverSlideProps {
@@ -16,18 +15,17 @@ export function WorkoutCoverSlide({
   activeSlide,
   totalSlides,
 }: WorkoutCoverSlideProps) {
-  const media = workout.imageAssetKey ? getExerciseMedia(workout.imageAssetKey) : null;
-
   return (
     <View style={{ width: cardWidth }} className="flex-col">
       <View
         style={{ width: cardWidth, height: 192 }}
         className="bg-[#18181B] overflow-hidden border-b border-[#27272A]"
       >
-        {media?.image && (
+        {workout.photoUri && (
           <Image
             testID={`workout-cover-image-${workout.id}`}
-            source={media.image}
+            source={{ uri: workout.photoUri }}
+            accessibilityLabel={`Zdjęcie z treningu ${workout.title}`}
             style={{ width: cardWidth, height: 192 }}
             resizeMode="cover"
           />
@@ -40,7 +38,7 @@ export function WorkoutCoverSlide({
           </Text>
           <View className="bg-[#1E1E22] px-2 py-0.5 rounded-full border border-[#27272A]">
             <Text className="text-[11px] font-bold text-[#A1A1AA]">
-              {workout.totalVolumeKg.toLocaleString()} kg tonażu
+              {workout.completedExerciseCount}/{workout.exercises.length} ćwiczeń
             </Text>
           </View>
         </View>

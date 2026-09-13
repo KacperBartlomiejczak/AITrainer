@@ -127,9 +127,33 @@ describe("UserDataExportSchema", () => {
         hapticsEnabled: true,
         units: "metric",
       },
+      workoutSessions: [
+        {
+          id: "wks_1",
+          routineId: "rtn_fbw_a",
+          title: "FBW A — Całe ciało",
+          startedAt: "2026-09-13T17:00:00.000Z",
+          completedAt: "2026-09-13T17:45:00.000Z",
+          durationSeconds: 2700,
+          hasPhoto: true,
+          exercises: [
+            { name: "Przysiad ze sztangą", targetMuscle: "Nogi", sets: 3, targetReps: "8-10", completed: true },
+          ],
+        },
+      ],
     };
 
     const result = UserDataExportSchema.safeParse(exportData);
     expect(result.success).toBe(true);
+  });
+
+  it("requires the workout history in the export (health data must be exportable)", () => {
+    const result = UserDataExportSchema.safeParse({
+      version: "1.0.0",
+      exportedAt: new Date().toISOString(),
+      profile: { name: "Kacper", experienceLevel: "advanced", fitnessGoal: "strength", muscleFocus: { mode: "undecided" } },
+      appSettings: { theme: "dark", soundEnabled: true, hapticsEnabled: true, units: "metric" },
+    });
+    expect(result.success).toBe(false);
   });
 });

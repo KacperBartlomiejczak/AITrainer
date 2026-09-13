@@ -36,11 +36,16 @@ export default function ProfileScreen() {
     resetAllData,
   } = useProfile();
 
-  const handleExport = () => {
-    const json = exportData();
-    Alert.alert("Eksport danych", `Twoje dane zostały przygotowane:\n${json.slice(0, 100)}...`, [
-      { text: "OK" },
-    ]);
+  const handleExport = async () => {
+    try {
+      const json = await exportData();
+      Alert.alert("Eksport danych", `Twoje dane zostały przygotowane:\n${json.slice(0, 100)}...`, [
+        { text: "OK" },
+      ]);
+    } catch (error: unknown) {
+      console.error("[profile] Failed to export user data", error);
+      Alert.alert("Eksport danych", "Nie udało się przygotować danych. Spróbuj ponownie.", [{ text: "OK" }]);
+    }
   };
 
   const handleReset = () => {
@@ -123,7 +128,7 @@ export default function ProfileScreen() {
           {isDirty ? "Zapisz zmiany" : "Zapisz zmiany"}
         </Button>
 
-        <ProfileSettingsSection onExportData={handleExport} onResetData={handleReset} />
+        <ProfileSettingsSection onExportData={() => void handleExport()} onResetData={handleReset} />
       </ScrollView>
     </View>
   );

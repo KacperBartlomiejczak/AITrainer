@@ -11,6 +11,8 @@ interface WorkoutExercisesSlideProps {
   completedMeta?: string;
   activeSlide?: number;
   totalSlides?: number;
+  /** Achievements are shown on a next slide only when the workout has any */
+  hasAchievementsSlide?: boolean;
 }
 
 export function WorkoutExercisesSlide({
@@ -22,6 +24,7 @@ export function WorkoutExercisesSlide({
   completedMeta,
   activeSlide = 0,
   totalSlides = 2,
+  hasAchievementsSlide = true,
 }: WorkoutExercisesSlideProps) {
   const content = (
     <View testID={`exercises-slide-${workoutId}`} className="flex-col gap-2 p-3.5">
@@ -38,7 +41,7 @@ export function WorkoutExercisesSlide({
         <Text className="text-xs font-black uppercase tracking-wider text-[#38BDF8]">
           ⚡ Wykonane Ćwiczenia ({exercises.length})
         </Text>
-        <Text className="text-[10px] text-[#71717A]">Przesuń w lewo →</Text>
+        {hasAchievementsSlide && <Text className="text-[10px] text-[#71717A]">Przesuń w lewo →</Text>}
       </View>
 
       <View className="flex-col gap-2">
@@ -57,16 +60,20 @@ export function WorkoutExercisesSlide({
                 </View>
               )}
             </View>
-            <Text className="text-xs text-[#38BDF8] font-semibold">{ex.setsSummary}</Text>
+            <Text className={`text-xs font-semibold ${ex.completed ? "text-[#38BDF8]" : "text-[#71717A]"}`}>
+              {ex.setsSummary}
+            </Text>
           </View>
         ))}
       </View>
 
-      <View className="pt-1">
-        <Text className="text-[11px] font-bold text-[#F59E0B]">
-          Przesuń w lewo po osiągnięcia → ({activeSlide + 1}/{totalSlides})
-        </Text>
-      </View>
+      {hasAchievementsSlide && (
+        <View className="pt-1">
+          <Text className="text-[11px] font-bold text-[#F59E0B]">
+            Przesuń w lewo po osiągnięcia → ({activeSlide + 1}/{totalSlides})
+          </Text>
+        </View>
+      )}
     </View>
   );
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import {
   OnboardingStepFooter,
@@ -34,7 +34,10 @@ export default function StepSummary() {
         <OnboardingStepFooter onBack={prevStep} onNext={submitOnboarding} nextLabel="Zaczynamy! 🚀" />
       }
     >
-      <View className="flex-1 justify-center">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingBottom: 16 }}
+      >
         <View className="items-center mb-10">
           <View className="w-20 h-20 rounded-full bg-[rgba(0,122,255,0.15)] items-center justify-center mb-6">
             <Text className="text-4xl">🎉</Text>
@@ -68,7 +71,7 @@ export default function StepSummary() {
             </View>
           </OnboardingSummaryCard>
         </View>
-      </View>
+      </ScrollView>
     </OnboardingStepLayout>
   );
 }

@@ -96,6 +96,20 @@ describe("ranking.schema", () => {
       expect(result.overallLeague.id).toBe("diamond");
       expect(result.totalScore).toBeGreaterThan(3000);
     });
+
+    it("correctly assigns bronze league when 6 muscles are bronze and 1 is silver", () => {
+      const records = {
+        chest: 50, // Silver (min 50)
+        back: 0, // Bronze
+        legs: 0, // Bronze
+        shoulders: 0, // Bronze
+        biceps: 0, // Bronze
+        triceps: 0, // Bronze
+        abs: 0, // Bronze
+      };
+      const result = calculateOverallRank(records);
+      expect(result.overallLeague.id).toBe("bronze");
+    });
   });
 
   describe("Zod validation schemas", () => {
@@ -167,6 +181,46 @@ describe("ranking.schema", () => {
 
       const parsed = RankingScreenDataSchema.safeParse(screenData);
       expect(parsed.success).toBe(true);
+    });
+
+    it("rejects RankingScreenData when muscleRanks has duplicates", () => {
+      const muscles = Object.keys(MUSCLE_BENCHMARK_CONFIGS) as RankingMuscleGroup[];
+      // Replace abs with chest to make a duplicate
+      const duplicateMuscles = muscles.map((m) => (m === "abs" ? "chest" : m));
+      const muscleRanks = duplicateMuscles.map((m) => ({
+        muscle: m,
+        namePl: MUSCLE_BENCHMARK_CONFIGS[m].namePl,
+        emoji: MUSCLE_BENCHMARK_CONFIGS[m].emoji,
+        benchmarkExercise: MUSCLE_BENCHMARK_CONFIGS[m].exerciseName,
+        viewSide: MUSCLE_BENCHMARK_CONFIGS[m].viewSide,
+        currentKg: 100,
+        league: STRENGTH_LEAGUES.diamond,
+        nextLeague: STRENGTH_LEAGUES.master,
+        kgRemaining: 20,
+        progressPercent: 10,
+      }));
+
+      const screenData = {
+        overallLeague: STRENGTH_LEAGUES.diamond,
+        totalScore: 4200,
+        selectedMuscle: "biceps" as const,
+        muscleRanks,
+        leaderboard: [
+          {
+            id: "user_1",
+            rank: 1,
+            displayName: "Kacper (Ty)",
+            league: STRENGTH_LEAGUES.diamond,
+            totalScore: 4200,
+            topMuscleNamePl: "Klatka piersiowa",
+            topRecordSummary: "100 kg",
+            isCurrentUser: true,
+          },
+        ],
+      };
+
+      const parsed = RankingScreenDataSchema.safeParse(screenData);
+      expect(parsed.success).toBe(false);
     });
   });
 });

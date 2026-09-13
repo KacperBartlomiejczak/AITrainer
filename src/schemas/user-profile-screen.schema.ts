@@ -93,29 +93,6 @@ export function calculateStrengthLeague(benchPressKg: number): StrengthLeague {
   return STRENGTH_LEAGUES.bronze;
 }
 
-// ── Top Routine / Past Workout Photos Schema ───────────────────
-export const WorkoutExerciseItemSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  setsSummary: z.string().min(1),
-  imageAssetKey: z.string().min(1),
-  isPersonalRecord: z.boolean().default(false),
-  recordNote: z.string().optional(),
-});
-
-export const RoutinePhotoItemSchema = z.object({
-  id: z.string().min(1),
-  title: z.string().min(1),
-  subtitle: z.string().min(1),
-  imageAssetKey: z.string().min(1),
-  routineId: z.string().min(1),
-  durationMinutes: z.number().int().positive(),
-  daysPerWeek: z.number().int().positive(),
-  completedDate: z.string().optional(),
-  totalVolumeKg: z.number().nonnegative().optional(),
-  exercises: z.array(WorkoutExerciseItemSchema).optional(),
-});
-
 // ── Profile Stats & Badges Schema ──────────────────────────────
 export const ProfileStatsSchema = z.object({
   displayName: z.string().min(1),
@@ -148,7 +125,7 @@ export const UserRoutineCardSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   targetMuscleGroups: z.array(z.string().min(1)).min(1),
-  daysPerWeek: z.number().int().positive(),
+  daysPerWeek: z.number().int().positive().max(7),
   durationMinutes: z.number().int().positive(),
   exerciseCount: z.number().int().positive(),
   levelLabel: z.string().min(1),
@@ -159,7 +136,7 @@ export const CompletedWorkoutExerciseSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   setsSummary: z.string().min(1),
-  imageAssetKey: z.string().optional(),
+  completed: z.boolean(),
   isPersonalRecord: z.boolean().default(false),
   recordNote: z.string().optional(),
 });
@@ -178,24 +155,36 @@ export const CompletedWorkoutDetailSchema = z.object({
   subtitle: z.string().optional(),
   completedDate: z.string().min(1),
   durationMinutes: z.number().int().positive(),
-  totalVolumeKg: z.number().nonnegative(),
-  imageAssetKey: z.string().optional().or(z.literal("")),
+  completedExerciseCount: z.number().int().nonnegative(),
+  /** Local file URI of the user's workout photo; null = no photo */
+  photoUri: z.string().min(1).nullable(),
   exercises: z.array(CompletedWorkoutExerciseSchema).min(1),
   achievements: z.array(CompletedWorkoutAchievementSchema).default([]),
+});
+
+// ── Past Workout Photos (top carousel = workouts that have a photo) ──
+export const RoutinePhotoItemSchema = CompletedWorkoutDetailSchema.pick({
+  id: true,
+  title: true,
+  completedDate: true,
+  durationMinutes: true,
+  exercises: true,
+}).extend({
+  subtitle: z.string().min(1),
+  photoUri: z.string().min(1),
 });
 
 // ── Root Screen Data Schema ────────────────────────────────────
 export const UserProfileScreenDataSchema = z.object({
   stats: ProfileStatsSchema,
-  routinePhotos: z.array(RoutinePhotoItemSchema).min(1),
+  routinePhotos: z.array(RoutinePhotoItemSchema),
   monthlyIntensity: MonthlyIntensitySchema,
-  routines: z.array(UserRoutineCardSchema).min(1),
-  recentWorkouts: z.array(CompletedWorkoutDetailSchema).min(1),
+  routines: z.array(UserRoutineCardSchema),
+  recentWorkouts: z.array(CompletedWorkoutDetailSchema),
 });
 
 // ── Inferred TypeScript Types ─────────────────────────────────
 export type RoutinePhotoItem = z.infer<typeof RoutinePhotoItemSchema>;
-export type WorkoutExerciseItem = z.infer<typeof WorkoutExerciseItemSchema>;
 export type ProfileStats = z.infer<typeof ProfileStatsSchema>;
 export type WeeklyIntensity = z.infer<typeof WeeklyIntensitySchema>;
 export type MonthlyIntensity = z.infer<typeof MonthlyIntensitySchema>;

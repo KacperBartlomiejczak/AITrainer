@@ -38,7 +38,23 @@ jest.mock("expo-router", () => ({
   useSegments: () => [],
   usePathname: jest.fn(() => "/"),
   useLocalSearchParams: mockUseLocalSearchParams,
+  // Screens are always focused in tests: run the effect like a mount effect
+  useFocusEffect: (effect) => require("react").useEffect(effect, [effect]),
   Link: ({ children }) => children,
   Redirect: () => null,
   Stack: MockStack,
 }));
+
+// Native file system and image picker are unavailable in Jest: in-memory fake + controllable picker
+jest.mock("expo-file-system", () => jest.requireActual("./expo-file-system.js"));
+
+jest.mock("expo-image-picker", () => ({
+  requestCameraPermissionsAsync: jest.fn(async () => ({ granted: true })),
+  requestMediaLibraryPermissionsAsync: jest.fn(async () => ({ granted: true })),
+  launchCameraAsync: jest.fn(async () => ({ canceled: true, assets: null })),
+  launchImageLibraryAsync: jest.fn(async () => ({ canceled: true, assets: null })),
+}));
+
+beforeEach(() => {
+  require("./expo-file-system.js").__fakeFileSystem.reset();
+});

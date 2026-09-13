@@ -2,6 +2,7 @@ import { z } from "zod";
 import { UserProfileSchema } from "./user.schema";
 import { WorkoutSummarySchema, RecentActivitySchema } from "./workout.schema";
 import { AiCoachTipSchema } from "./ai-coach.schema";
+import { FriendWorkoutFeedSchema } from "./friends-feed.schema";
 
 export const DayStatusSchema = z.enum(["completed", "today_pending", "rest", "upcoming", "missed"]);
 
@@ -32,6 +33,7 @@ export const HomeScreenDataSchema = z.object({
   aiCoachTip: AiCoachTipSchema.nullable(),
   quickActions: z.array(QuickActionItemSchema),
   recentActivity: RecentActivitySchema.nullable(),
+  friendsFeed: FriendWorkoutFeedSchema,
 });
 
 export type DayStatus = z.infer<typeof DayStatusSchema>;

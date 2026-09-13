@@ -66,7 +66,7 @@ export function MonthlyIntensityChart({
               {/* Progress bar */}
               <View className="h-2 w-full bg-[#27272A] rounded-full overflow-hidden">
                 <View
-                  className="h-full bg-gradient-to-r from-[#007AFF] to-[#38BDF8] rounded-full"
+                  className="h-full bg-[#007AFF] rounded-full"
                   style={{ width: `${percent}%` }}
                 />
               </View>

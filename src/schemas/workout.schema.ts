@@ -25,8 +25,10 @@ export const RecentActivitySchema = z.object({
   title: z.string().min(1),
   completedAt: z.string().min(1),
   durationMinutes: z.number().int().positive(),
-  totalVolumeKg: z.number().nonnegative(),
-  personalRecordsCount: z.number().int().nonnegative().default(0),
+  completedExerciseCount: z.number().int().nonnegative(),
+  totalExerciseCount: z.number().int().positive(),
+  /** Local file URI of the workout photo; null = no photo */
+  photoUri: z.string().min(1).nullable(),
 });
 
 export type ExercisePreview = z.infer<typeof ExercisePreviewSchema>;

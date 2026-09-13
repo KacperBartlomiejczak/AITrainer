@@ -229,11 +229,23 @@ describe("Ranking Components", () => {
       expect(getByText("Kacper (Ty)")).toBeTruthy();
       expect(getByText("Mateusz K.")).toBeTruthy();
       expect(getByTestId("leaderboard-filter-diamond")).toBeTruthy();
+      expect(getByTestId("leaderboard-filter-titan")).toBeTruthy();
+      expect(getByTestId("leaderboard-filter-bronze")).toBeTruthy();
 
       await act(async () => {
         fireEvent.press(getByTestId("leaderboard-filter-diamond"));
       });
       expect(onFilterMock).toHaveBeenCalledWith("diamond");
+
+      await act(async () => {
+        fireEvent.press(getByTestId("leaderboard-filter-titan"));
+      });
+      expect(onFilterMock).toHaveBeenCalledWith("titan");
+
+      await act(async () => {
+        fireEvent.press(getByTestId("leaderboard-filter-bronze"));
+      });
+      expect(onFilterMock).toHaveBeenCalledWith("bronze");
 
       unmount();
     });

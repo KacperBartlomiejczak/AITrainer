@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { useWorkoutDetail } from "@/hooks/use-workout-detail";
@@ -8,19 +8,32 @@ import {
   WorkoutExercisesList,
   WorkoutStartButton,
 } from "@/components/workout";
+import { WorkoutPhotoSourceSheet } from "@/components/workout-photo";
 
 export default function WorkoutDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const {
     routine,
+    isLoading,
     isActive,
+    isSaving,
+    finishError,
     completedExerciseIds,
     startWorkout,
     finishWorkout,
     toggleExercise,
     backToWorkouts,
+    photoSheet,
   } = useWorkoutDetail(id);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-black justify-center items-center">
+        <ActivityIndicator testID="workout-loading" color="#38BDF8" />
+      </View>
+    );
+  }
 
   if (!routine) {
     return (
@@ -70,12 +83,31 @@ export default function WorkoutDetailScreen() {
           onToggleExercise={toggleExercise}
         />
 
+        {finishError && (
+          <Text accessibilityRole="alert" className="text-sm font-semibold text-center text-[#F87171]">
+            {finishError}
+          </Text>
+        )}
+
         <WorkoutStartButton
           isActive={isActive}
+          isSaving={isSaving}
           onStart={startWorkout}
-          onFinish={finishWorkout}
+          onFinish={() => void finishWorkout()}
         />
       </ScrollView>
+
+      <WorkoutPhotoSourceSheet
+        visible={photoSheet.isOpen}
+        title="Trening zapisany 💪"
+        description="Chcesz dodać zdjęcie z treningu? To opcjonalne — możesz też zrobić to później w profilu."
+        hasPhoto={false}
+        isSaving={photoSheet.isSaving}
+        errorMessage={photoSheet.errorMessage}
+        dismissLabel="Pomiń"
+        onSelectSource={(source) => void photoSheet.selectSource(source)}
+        onDismiss={photoSheet.dismiss}
+      />
     </View>
   );
 }

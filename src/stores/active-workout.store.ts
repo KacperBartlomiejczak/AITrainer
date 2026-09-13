@@ -3,8 +3,10 @@ import { create } from "zustand";
 interface ActiveWorkoutState {
   activeRoutineId: string | null;
   isActive: boolean;
+  /** Epoch ms when the workout started (used to store its duration) */
+  startedAt: number | null;
   completedExerciseIds: string[];
-  startWorkout: (routineId: string) => void;
+  startWorkout: (routineId: string, startedAt?: number) => void;
   finishWorkout: () => void;
   toggleExerciseCompleted: (exerciseId: string) => void;
 }
@@ -12,17 +14,20 @@ interface ActiveWorkoutState {
 export const useActiveWorkoutStore = create<ActiveWorkoutState>((set) => ({
   activeRoutineId: null,
   isActive: false,
+  startedAt: null,
   completedExerciseIds: [],
-  startWorkout: (routineId: string) =>
+  startWorkout: (routineId: string, startedAt: number = Date.now()) =>
     set({
       activeRoutineId: routineId,
       isActive: true,
+      startedAt,
       completedExerciseIds: [],
     }),
   finishWorkout: () =>
     set({
       activeRoutineId: null,
       isActive: false,
+      startedAt: null,
       completedExerciseIds: [],
     }),
   toggleExerciseCompleted: (exerciseId: string) =>

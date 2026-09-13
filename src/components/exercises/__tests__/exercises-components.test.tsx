@@ -100,4 +100,28 @@ describe("Exercise Catalog Components", () => {
 
     unmount();
   });
+
+  it("renders the exercise GIF in ExercisePreviewModal when media exists", async () => {
+    const { getByTestId, queryByTestId, unmount } = await render(
+      <ExercisePreviewModal exercise={MOCK_EXERCISE} visible={true} onClose={jest.fn()} />
+    );
+
+    expect(getByTestId("exercise-preview-gif")).toBeTruthy();
+    expect(queryByTestId("exercise-preview-placeholder")).toBeNull();
+
+    unmount();
+  });
+
+  it("renders a placeholder in ExercisePreviewModal when the exercise has no media", async () => {
+    const exerciseWithoutMedia: CatalogExercise = { ...MOCK_EXERCISE, id: "no-media" };
+    const { getByTestId, getByText, queryByTestId, unmount } = await render(
+      <ExercisePreviewModal exercise={exerciseWithoutMedia} visible={true} onClose={jest.fn()} />
+    );
+
+    expect(getByTestId("exercise-preview-placeholder")).toBeTruthy();
+    expect(getByText("Brak podglądu ćwiczenia")).toBeTruthy();
+    expect(queryByTestId("exercise-preview-gif")).toBeNull();
+
+    unmount();
+  });
 });

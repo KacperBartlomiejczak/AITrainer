@@ -9,68 +9,84 @@ import { PastWorkoutModal } from "../PastWorkoutModal";
 import { STRENGTH_LEAGUES } from "@/schemas/user-profile-screen.schema";
 
 describe("User Profile UI Components", () => {
+  const photoExercises = [
+    {
+      id: "wse_1",
+      name: "Przysiad ze sztangą",
+      setsSummary: "3 serie × 8-10",
+      completed: true,
+      isPersonalRecord: false,
+    },
+    {
+      id: "wse_2",
+      name: "Plank (deska)",
+      setsSummary: "Pominięte",
+      completed: false,
+      isPersonalRecord: false,
+    },
+  ];
+
   describe("RoutinePhotoCarousel", () => {
     const mockPhotos = [
       {
-        id: "rp_01",
-        title: "Push Day — Klatka & Barki",
-        subtitle: "Hipertrofia & Siła",
-        imageAssetKey: "0025",
-        routineId: "rtn_push_02",
-        durationMinutes: 55,
-        daysPerWeek: 4,
+        id: "wks_1",
+        title: "FBW A — Całe ciało",
+        subtitle: "Nogi, Brzuch",
+        photoUri: "file:///document/workout-photos/wks_1-1.jpg",
+        completedDate: "Wczoraj, 18:30",
+        durationMinutes: 45,
+        exercises: photoExercises,
       },
       {
-        id: "rp_02",
-        title: "FBW Siła & Stabilizacja",
-        subtitle: "Całe ciało",
-        imageAssetKey: "0047",
-        routineId: "rtn_fbw_01",
-        durationMinutes: 45,
-        daysPerWeek: 3,
+        id: "wks_2",
+        title: "FBW B — Całe ciało",
+        subtitle: "Nogi, Plecy",
+        photoUri: "file:///document/workout-photos/wks_2-1.jpg",
+        completedDate: "3 dni temu",
+        durationMinutes: 41,
+        exercises: photoExercises,
       },
     ];
 
-    it("renders vertical rectangle photos and triggers onSelectPhoto", async () => {
+    it("renders the user's workout photos and triggers onSelectPhoto", async () => {
       const onSelect = jest.fn();
       const { getByText, getByTestId, unmount } = await render(
         <RoutinePhotoCarousel photos={mockPhotos} onSelectPhoto={onSelect} />
       );
 
-      expect(getByText("Push Day — Klatka & Barki")).toBeTruthy();
-      expect(getByText("FBW Siła & Stabilizacja")).toBeTruthy();
+      expect(getByText("FBW A — Całe ciało")).toBeTruthy();
+      expect(getByText("FBW B — Całe ciało")).toBeTruthy();
+      expect(getByTestId("routine-photo-image-wks_1").props.source).toEqual({ uri: mockPhotos[0].photoUri });
 
-      const item = getByTestId("routine-photo-rp_01");
+      const item = getByTestId("routine-photo-wks_1");
       await act(async () => {
         fireEvent.press(item);
       });
-      expect(onSelect).toHaveBeenCalledWith("rp_01");
+      expect(onSelect).toHaveBeenCalledWith("wks_1");
 
+      unmount();
+    });
+
+    it("renders an empty state when no workout has a photo yet", async () => {
+      const { getByTestId, getByText, unmount } = await render(
+        <RoutinePhotoCarousel photos={[]} onSelectPhoto={jest.fn()} />
+      );
+
+      expect(getByTestId("routine-photos-empty")).toBeTruthy();
+      expect(getByText("Brak zdjęć z treningów")).toBeTruthy();
       unmount();
     });
   });
 
   describe("PastWorkoutModal", () => {
     const mockWorkout = {
-      id: "rp_example_01",
-      title: "Ostatni Trening na Siłowni 🔥",
-      subtitle: "Klatka, Barki & Biceps",
-      imageAssetKey: "example_past_photo",
-      routineId: "rtn_push_02",
-      durationMinutes: 58,
-      daysPerWeek: 4,
+      id: "wks_1",
+      title: "FBW A — Całe ciało",
+      subtitle: "Nogi, Brzuch",
+      photoUri: "file:///document/workout-photos/wks_1-1.jpg",
       completedDate: "Wczoraj, 18:30",
-      totalVolumeKg: 6450,
-      exercises: [
-        {
-          id: "ex_p1",
-          name: "Wyciskanie sztangi na ławce poziomej",
-          setsSummary: "4 serie: 80kg×10, 90kg×8, 95kg×6, 100kg×4",
-          imageAssetKey: "0025",
-          isPersonalRecord: true,
-          recordNote: "🔥 Nowy PR: 100 kg na klatę!",
-        },
-      ],
+      durationMinutes: 45,
+      exercises: photoExercises,
     };
 
     it("renders modal with workout details, exercises, and handles close", async () => {
@@ -84,11 +100,15 @@ describe("User Profile UI Components", () => {
       );
 
       expect(getByTestId("past-workout-modal")).toBeTruthy();
-      expect(getByText("Ostatni Trening na Siłowni 🔥")).toBeTruthy();
-      expect(getByText("Wyciskanie sztangi na ławce poziomej")).toBeTruthy();
-      expect(getByText("4 serie: 80kg×10, 90kg×8, 95kg×6, 100kg×4")).toBeTruthy();
+      expect(getByText("FBW A — Całe ciało")).toBeTruthy();
+      expect(getByTestId("past-workout-photo").props.source).toEqual({ uri: mockWorkout.photoUri });
+      expect(getByText("Przysiad ze sztangą")).toBeTruthy();
+      expect(getByText("3 serie × 8-10")).toBeTruthy();
+      expect(getByText("Pominięte")).toBeTruthy();
 
       const closeBtn = getByTestId("close-past-workout-modal");
+      expect(closeBtn.props.accessibilityRole).toBe("button");
+      expect(closeBtn.props.accessibilityLabel).toBe("Zamknij podgląd treningu");
       await act(async () => {
         fireEvent.press(closeBtn);
       });
@@ -199,20 +219,12 @@ describe("User Profile UI Components", () => {
     const mockWorkouts = [
       {
         id: "cw_01",
-        title: "Sesja Pchająca: Klatka & Barki",
+        title: "FBW A — Całe ciało",
         completedDate: "Wczoraj, 18:30",
         durationMinutes: 58,
-        totalVolumeKg: 6450,
-        imageAssetKey: "0025",
-        exercises: [
-          {
-            id: "e_01",
-            name: "Wyciskanie sztangi leżąc",
-            setsSummary: "4 serie: 80kg×10, 90kg×8, 95kg×6, 100kg×4",
-            isPersonalRecord: true,
-            recordNote: "🔥 Nowy PR: 100 kg na klatę!",
-          },
-        ],
+        completedExerciseCount: 1,
+        photoUri: "file:///document/workout-photos/cw_01-1.jpg",
+        exercises: photoExercises,
         achievements: [
           {
             id: "ach_01",
@@ -228,25 +240,18 @@ describe("User Profile UI Components", () => {
         title: "Kondycja & Brzuch (Bez zdjęcia)",
         completedDate: "4 dni temu",
         durationMinutes: 30,
-        totalVolumeKg: 0,
-        imageAssetKey: "",
+        completedExerciseCount: 1,
+        photoUri: null,
         exercises: [
           {
             id: "e_02",
             name: "Deska / Plank",
-            setsSummary: "3 serie po 60 sekund",
+            setsSummary: "3 serie × 60 sek",
+            completed: true,
             isPersonalRecord: false,
           },
         ],
-        achievements: [
-          {
-            id: "ach_02",
-            title: "Stalowy Brzuch",
-            description: "Brak przerw w seriach deski",
-            icon: "⚡",
-            badgeColor: "#F59E0B",
-          },
-        ],
+        achievements: [],
       },
     ];
 
@@ -255,22 +260,54 @@ describe("User Profile UI Components", () => {
         <RecentCompletedWorkouts workouts={mockWorkouts} />
       );
 
-      // Card with photo
       expect(getByTestId("completed-workout-cw_01")).toBeTruthy();
-      expect(getByTestId("workout-cover-image-cw_01")).toBeTruthy();
+      expect(getByTestId("workout-cover-image-cw_01").props.source).toEqual({ uri: mockWorkouts[0].photoUri });
+      expect(getByText("1/2 ćwiczeń")).toBeTruthy();
       expect(getByTestId("exercises-slide-cw_01")).toBeTruthy();
       expect(getByTestId("achievements-slide-cw_01")).toBeTruthy();
-      expect(getByText("Wyciskanie sztangi leżąc")).toBeTruthy();
+      expect(getByText("Przysiad ze sztangą")).toBeTruthy();
       expect(getByText("Rekord PR 100 kg!")).toBeTruthy();
 
-      // Card WITHOUT photo renders exercises directly first and achievements next
+      unmount();
+    });
+
+    it("renders a workout without photo and achievements as a single exercises slide", async () => {
+      const { getByText, getByTestId, queryByTestId, unmount } = await render(
+        <RecentCompletedWorkouts workouts={mockWorkouts} />
+      );
+
       expect(getByTestId("completed-workout-cw_02")).toBeTruthy();
+      expect(queryByTestId("workout-cover-image-cw_02")).toBeNull();
       expect(getByTestId("exercises-slide-cw_02")).toBeTruthy();
-      expect(getByTestId("achievements-slide-cw_02")).toBeTruthy();
+      expect(queryByTestId("achievements-slide-cw_02")).toBeNull();
       expect(getByText("Kondycja & Brzuch (Bez zdjęcia)")).toBeTruthy();
       expect(getByText("Deska / Plank")).toBeTruthy();
-      expect(getByText("Stalowy Brzuch")).toBeTruthy();
 
+      unmount();
+    });
+
+    it("lets the user add a photo to a workout without one, or change an existing photo", async () => {
+      const onManagePhoto = jest.fn();
+      const { getByTestId, getByText, unmount } = await render(
+        <RecentCompletedWorkouts workouts={mockWorkouts} onManagePhoto={onManagePhoto} />
+      );
+
+      expect(getByText("📷 Zmień zdjęcie")).toBeTruthy();
+      expect(getByText("📷 Dodaj zdjęcie")).toBeTruthy();
+
+      await act(async () => {
+        fireEvent.press(getByTestId("manage-photo-cw_02"));
+      });
+      expect(onManagePhoto).toHaveBeenCalledWith("cw_02");
+
+      unmount();
+    });
+
+    it("renders an empty state for a user without completed workouts", async () => {
+      const { getByTestId, getByText, unmount } = await render(<RecentCompletedWorkouts workouts={[]} />);
+
+      expect(getByTestId("recent-workouts-empty")).toBeTruthy();
+      expect(getByText("Brak ukończonych treningów")).toBeTruthy();
       unmount();
     });
 

@@ -1,8 +1,12 @@
 import React from "react";
-import { render, fireEvent, act } from "@testing-library/react-native";
+import { render, fireEvent, act, screen } from "@testing-library/react-native";
 import UserProfileScreen from "../user-profile";
 import { useRouter } from "expo-router";
 import { useOnboardingStore } from "@/stores/onboarding.store";
+import { resetInMemoryDatabase, saveLocalProfile } from "@/db/testing/in-memory-client";
+import { saveFinishedWorkout } from "@/db/testing/workout-fixtures";
+
+jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
 jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
@@ -11,7 +15,7 @@ jest.mock("react-native-safe-area-context", () => ({
 jest.setTimeout(60000);
 
 describe("UserProfileScreen", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     useOnboardingStore.setState({
       onboardingData: {
         name: "Kacper Bartłomiejczak",
@@ -22,67 +26,89 @@ describe("UserProfileScreen", () => {
       hasCompletedOnboarding: true,
       isHydrated: true,
     });
+    await saveLocalProfile();
   });
 
-  it("renders full user profile screen with routines photos, badges, intensity chart, routines and recent workouts", async () => {
+  afterEach(() => {
+    resetInMemoryDatabase();
+  });
+
+  it("renders photos, badges, intensity chart, routines and workouts stored in the database", async () => {
     const router = useRouter();
-    const { getByText, getAllByText, getByTestId, unmount } = await render(
-      <UserProfileScreen />
-    );
+    const withPhoto = await saveFinishedWorkout({ title: "Trening ze zdjęciem", finishedMinutesAgo: 30, withPhoto: true });
+    const withoutPhoto = await saveFinishedWorkout({ title: "Trening bez zdjęcia" });
 
-    // Screen title and top bar
-    expect(getByText("Twój Profil 👤")).toBeTruthy();
-    expect(getByTestId("profile-settings-button")).toBeTruthy();
+    const { unmount } = await render(<UserProfileScreen />);
 
-    // 1. Routine photos at the top (including example past training photo)
-    expect(getByTestId("routine-photo-rp_example_01")).toBeTruthy();
-    const photoTitles = getAllByText("Ostatni Trening na Siłowni 🔥");
-    expect(photoTitles.length).toBeGreaterThanOrEqual(2); // In top carousel and in bottom cards
+    expect(screen.getByText("Twój Profil 👤")).toBeTruthy();
+    expect(screen.getByTestId("profile-settings-button")).toBeTruthy();
+
+    // 1. Only the workout with a photo is in the top carousel (and also in the history below)
+    expect(await screen.findByTestId(`routine-photo-${withPhoto.id}`)).toBeTruthy();
+    expect(screen.queryByTestId(`routine-photo-${withoutPhoto.id}`)).toBeNull();
+    expect(screen.getAllByText("Trening ze zdjęciem").length).toBeGreaterThanOrEqual(2);
 
     // 2. Profile header with streak & diamond league
-    expect(getByText("Kacper Bartłomiejczak")).toBeTruthy();
-    expect(getByText("🔥 36 dni serii")).toBeTruthy();
-    expect(getByText("💎 Diamentowa Liga")).toBeTruthy();
-    expect(getByText("100 kg Wyciskanie")).toBeTruthy();
+    expect(screen.getByText("Kacper Bartłomiejczak")).toBeTruthy();
+    expect(screen.getByText("🔥 36 dni serii")).toBeTruthy();
+    expect(screen.getByText("💎 Diamentowa Liga")).toBeTruthy();
 
     // 3. Monthly intensity chart
-    expect(getByText("Intensywność Treningów")).toBeTruthy();
-    expect(getByText("18 lip – 25 lip")).toBeTruthy();
+    expect(screen.getByText("Intensywność Treningów")).toBeTruthy();
 
-    // 4. User routines (horizontal scrollable)
-    expect(getByTestId("routines-horizontal-scroll")).toBeTruthy();
-    expect(getByText("Push (Klatka + Barki + Triceps)")).toBeTruthy();
+    // 4. Basic routines from the database
+    expect(screen.getByTestId("routines-horizontal-scroll")).toBeTruthy();
+    expect(screen.getByText("FBW A — Całe ciało")).toBeTruthy();
+    expect(screen.getByText("FBW B — Całe ciało")).toBeTruthy();
 
-    // 5. Recent completed workouts (synchronized with top photos)
-    expect(getAllByText("Push Day — Klatka & Barki").length).toBeGreaterThanOrEqual(2);
-    expect(getAllByText("FBW Siła & Stabilizacja").length).toBeGreaterThanOrEqual(2);
-    expect(getAllByText("Pull Day — Plecy & Ramiona").length).toBeGreaterThanOrEqual(2);
-    expect(getByText("Kondycja & Brzuch (Bez zdjęcia)")).toBeTruthy();
+    // 5. Previous workouts, newest first, each can get a photo
+    expect(screen.getByText("⏱️ Poprzednie Treningi (2)")).toBeTruthy();
+    expect(screen.getByTestId(`manage-photo-${withoutPhoto.id}`)).toBeTruthy();
+    expect(screen.getByTestId("pill-navbar")).toBeTruthy();
 
-    // Navigation Pill
-    expect(getByTestId("pill-navbar")).toBeTruthy();
-
-    // Click photo to open workout modal
-    const photoCard = getByTestId("routine-photo-rp_example_01");
+    // Photo opens the workout details
     await act(async () => {
-      fireEvent.press(photoCard);
+      fireEvent.press(screen.getByTestId(`routine-photo-${withPhoto.id}`));
     });
-    expect(getByTestId("past-workout-modal")).toBeTruthy();
-    expect(getAllByText("Wyciskanie sztangi na ławce poziomej").length).toBeGreaterThanOrEqual(1);
-
-    // Close modal
-    const closeBtn = getByTestId("close-past-workout-modal");
+    expect(screen.getByTestId("past-workout-modal")).toBeTruthy();
     await act(async () => {
-      fireEvent.press(closeBtn);
+      fireEvent.press(screen.getByTestId("close-past-workout-modal"));
     });
 
     // Settings navigation
-    const settingsBtn = getByTestId("profile-settings-button");
     await act(async () => {
-      fireEvent.press(settingsBtn);
+      fireEvent.press(screen.getByTestId("profile-settings-button"));
     });
     expect(router.push).toHaveBeenCalledWith("/profile");
 
+    unmount();
+  });
+
+  it("opens the camera/gallery sheet for a workout from the history", async () => {
+    const workout = await saveFinishedWorkout();
+    const { unmount } = await render(<UserProfileScreen />);
+
+    await act(async () => {
+      fireEvent.press(await screen.findByTestId(`manage-photo-${workout.id}`));
+    });
+
+    expect(screen.getByText("Zdjęcie z treningu")).toBeTruthy();
+    expect(screen.getByTestId("photo-source-camera")).toBeTruthy();
+    expect(screen.getByTestId("photo-source-library")).toBeTruthy();
+    expect(screen.queryByTestId("photo-remove")).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Anuluj"));
+    });
+    expect(screen.queryByTestId("photo-source-camera")).toBeNull();
+    unmount();
+  });
+
+  it("shows empty states for a new user", async () => {
+    const { unmount } = await render(<UserProfileScreen />);
+
+    expect(await screen.findByTestId("routine-photos-empty")).toBeTruthy();
+    expect(screen.getByTestId("recent-workouts-empty")).toBeTruthy();
     unmount();
   });
 });

@@ -10,3 +10,4 @@ export { WorkoutExercisesSlide } from "./WorkoutExercisesSlide";
 export { WorkoutAchievementsSlide } from "./WorkoutAchievementsSlide";
 export { WorkoutCoverSlide } from "./WorkoutCoverSlide";
 export { WorkoutCardPagination } from "./WorkoutCardPagination";
+export { WorkoutPhotoButton } from "./WorkoutPhotoButton";

@@ -1,6 +1,10 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react-native";
 import HomeScreen from "../index";
+import { resetInMemoryDatabase, saveLocalProfile } from "@/db/testing/in-memory-client";
+import { saveFinishedWorkout } from "@/db/testing/workout-fixtures";
+
+jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
 // Mock expo-router
 const mockPush = jest.fn();
@@ -11,6 +15,7 @@ jest.mock("expo-router", () => ({
     back: jest.fn(),
   }),
   usePathname: () => "/",
+  useFocusEffect: (effect: () => void) => jest.requireActual<typeof import("react")>("react").useEffect(effect, [effect]),
 }));
 
 // Mock react-native-safe-area-context
@@ -19,6 +24,14 @@ jest.mock("react-native-safe-area-context", () => ({
 }));
 
 describe("HomeScreen Entrypoint", () => {
+  beforeEach(async () => {
+    await saveLocalProfile();
+  });
+
+  afterEach(() => {
+    resetInMemoryDatabase();
+  });
+
   it("renders full home screen with all sections", async () => {
     const { unmount } = await render(<HomeScreen />);
 
@@ -50,10 +63,24 @@ describe("HomeScreen Entrypoint", () => {
     expect(screen.getByText("Plan AI")).toBeTruthy();
     expect(screen.getByText("Historia & Statystyki")).toBeTruthy();
 
-    // Recent Activity
+    // Recent Activity — empty for a new user
     expect(screen.getByText("Ostatnia Aktywność")).toBeTruthy();
-    expect(screen.getByText("Plecy + Biceps (FBW B)")).toBeTruthy();
+    expect(await screen.findByTestId("recent-activity-empty")).toBeTruthy();
 
+    // Friends feed (mock data)
+    expect(screen.getByText("Treningi Znajomych")).toBeTruthy();
+    expect(screen.getByText("Ola Nowak")).toBeTruthy();
+
+    unmount();
+  });
+
+  it("shows the latest workout from the database as recent activity", async () => {
+    await saveFinishedWorkout({ title: "Mój poranny trening", withPhoto: true });
+    const { unmount } = await render(<HomeScreen />);
+
+    expect(await screen.findByText("Mój poranny trening")).toBeTruthy();
+    expect(screen.getByText("2/3 ćwiczeń")).toBeTruthy();
+    expect(screen.getByTestId("recent-activity-photo")).toBeTruthy();
     unmount();
   });
 

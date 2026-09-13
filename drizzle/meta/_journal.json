@@ -15,6 +15,13 @@
       "when": 1789313229921,
       "tag": "0001_experience_level_and_muscle_focus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789314731561,
+      "tag": "0002_routines_and_workout_sessions",
+      "breakpoints": true
     }
   ]
 }

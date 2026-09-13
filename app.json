@@ -34,7 +34,15 @@
           "imageWidth": 76
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "AITrainer potrzebuje dostępu do galerii, aby dodać zdjęcie do Twojego treningu.",
+          "cameraPermission": "AITrainer potrzebuje dostępu do aparatu, aby zrobić zdjęcie po treningu.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

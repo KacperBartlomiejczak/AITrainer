@@ -173,15 +173,17 @@ describe("createOnboardingRepository", () => {
     await expect(other.load()).resolves.toBeNull();
   });
 
-  it("returns null and logs the raw payload when a stored row is corrupted", async () => {
+  it("returns null and logs only issue paths/codes when a stored row is corrupted", async () => {
     const repository = createOnboardingRepository(testDb.db, { now });
     insertRawProfile({ fitnessGoal: "flying" });
 
     await expect(repository.load()).resolves.toBeNull();
     expect(console.warn).toHaveBeenCalledWith(
       expect.stringContaining("[db]"),
-      expect.objectContaining({ raw: expect.objectContaining({ fitnessGoal: "flying" }) }),
+      expect.not.objectContaining({ raw: expect.anything() }),
     );
+    const [, payload] = (console.warn as jest.Mock).mock.calls[0];
+    expect(JSON.stringify(payload)).not.toContain("flying");
   });
 
   it("returns null for an unknown experience level", async () => {
