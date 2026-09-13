@@ -1,17 +1,32 @@
 import React from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { usePublicProfile } from "@/hooks/use-public-profile";
+import { Settings } from "lucide-react-native";
+import { useUserProfileScreen } from "@/hooks/use-user-profile-screen";
 import {
-  PublicProfileCard,
-  PublicProfileActions,
-} from "@/components/public-profile";
+  RoutinePhotoCarousel,
+  ProfileHeaderWithBadges,
+  MonthlyIntensityChart,
+  UserRoutinesList,
+  RecentCompletedWorkouts,
+  PastWorkoutModal,
+} from "@/components/user-profile";
 import { PillNavbar } from "@/components/navigation";
 
 export default function UserProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { displayName, fitnessGoalLabel, streakDays, openSettings } =
-    usePublicProfile();
+  const {
+    stats,
+    routinePhotos,
+    monthlyIntensity,
+    routines,
+    recentWorkouts,
+    selectedWorkoutPhoto,
+    openWorkoutPhotoModal,
+    closeWorkoutPhotoModal,
+    openSettings,
+    startRoutine,
+  } = useUserProfileScreen();
 
   return (
     <View className="flex-1 bg-black">
@@ -24,26 +39,54 @@ export default function UserProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-col gap-6">
-          <View className="flex-col gap-1">
-            <Text className="text-2xl font-black text-white tracking-tight">
-              Twój Profil Publiczny 👤
-            </Text>
-            <Text className="text-xs text-[#71717A]">
-              Tak Twój profil i osiągnięcia są widoczne dla innych
-            </Text>
+          {/* Top Bar with Title and Settings Action */}
+          <View className="flex-row items-center justify-between">
+            <View className="flex-col gap-0.5">
+              <Text className="text-2xl font-black text-white tracking-tight">
+                Twój Profil 👤
+              </Text>
+              <Text className="text-xs text-[#71717A]">
+                Postępy, intensywność i historia treningów
+              </Text>
+            </View>
+
+            <Pressable
+              testID="profile-settings-button"
+              onPress={openSettings}
+              accessibilityRole="button"
+              accessibilityLabel="Ustawienia profilu"
+              className="w-11 h-11 rounded-full bg-[#121214] border border-[#27272A] items-center justify-center active:bg-[#1E1E22]"
+            >
+              <Settings size={20} color="#A1A1AA" />
+            </Pressable>
           </View>
 
-          {/* Profile Card */}
-          <PublicProfileCard
-            displayName={displayName}
-            fitnessGoalLabel={fitnessGoalLabel}
-            streakDays={streakDays}
+          {/* 1. Zdjęcia z rutyn / treningów (pionowe prostokąty zaokrąglone) */}
+          <RoutinePhotoCarousel
+            photos={routinePhotos}
+            onSelectPhoto={openWorkoutPhotoModal}
           />
 
-          {/* Quick Action to Settings & Edit */}
-          <PublicProfileActions onOpenSettings={openSettings} />
+          {/* 2. Tagi pod profilem, seria 36 dni, ranga 100 kg Diamentowa Liga */}
+          <ProfileHeaderWithBadges stats={stats} />
+
+          {/* 3. Intensywność treningów w ciągu miesiąca (tydzień po tygodniu) */}
+          <MonthlyIntensityChart intensity={monthlyIntensity} />
+
+          {/* 4. Rutyny / treningi użytkownika (karty scrollowane poziomo) */}
+          <UserRoutinesList routines={routines} onStartRoutine={startRoutine} />
+
+          {/* 5. Ostatnio wykonane treningi ze zdjęciem na samej górze */}
+          <RecentCompletedWorkouts workouts={recentWorkouts} />
         </View>
       </ScrollView>
+
+      {/* Modal ze szczegółami treningu i zdjęciami ćwiczeń po kliknięciu w zdjęcie */}
+      <PastWorkoutModal
+        workout={selectedWorkoutPhoto}
+        visible={Boolean(selectedWorkoutPhoto)}
+        onClose={closeWorkoutPhotoModal}
+      />
 
       {/* Floating Pill Navigation */}
       <PillNavbar activeTab="profile" />

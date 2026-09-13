@@ -87,6 +87,45 @@ describe("ExercisesScreen", () => {
 
     unmount();
   });
+
+  it("exposes accessible view-mode selector and updates selected state", async () => {
+    const { getByLabelText, getByTestId, unmount } = await render(
+      <ExercisesScreen />
+    );
+
+    const gridBtn = getByTestId("view-mode-grid-button");
+    const listBtn = getByTestId("view-mode-list-button");
+
+    expect(gridBtn.props.accessibilityRole).toBe("button");
+    expect(gridBtn.props.accessibilityLabel).toBe("Widok siatki");
+    expect(gridBtn.props.accessibilityState).toEqual({ selected: true });
+
+    expect(listBtn.props.accessibilityRole).toBe("button");
+    expect(listBtn.props.accessibilityLabel).toBe("Widok listy");
+    expect(listBtn.props.accessibilityState).toEqual({ selected: false });
+
+    expect(getByLabelText("Widok siatki")).toBeTruthy();
+    expect(getByLabelText("Widok listy")).toBeTruthy();
+
+    // Switch to list mode
+    await act(async () => {
+      fireEvent.press(listBtn);
+    });
+
+    expect(gridBtn.props.accessibilityState).toEqual({ selected: false });
+    expect(listBtn.props.accessibilityState).toEqual({ selected: true });
+
+    // Switch back to grid mode
+    await act(async () => {
+      fireEvent.press(gridBtn);
+    });
+
+    expect(gridBtn.props.accessibilityState).toEqual({ selected: true });
+    expect(listBtn.props.accessibilityState).toEqual({ selected: false });
+
+    unmount();
+  });
 });
+
 
 

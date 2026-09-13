@@ -21,19 +21,62 @@ describe("UserProfileScreen", () => {
     });
   });
 
-  it("renders user profile screen with display name and pill navbar", async () => {
+  it("renders full user profile screen with routines photos, badges, intensity chart, routines and recent workouts", async () => {
     const router = useRouter();
-    const { getByText, getByTestId, unmount } = await render(
+    const { getByText, getAllByText, getByTestId, unmount } = await render(
       <UserProfileScreen />
     );
 
-    expect(getByText("Twój Profil Publiczny 👤")).toBeTruthy();
+    // Screen title and top bar
+    expect(getByText("Twój Profil 👤")).toBeTruthy();
+    expect(getByTestId("profile-settings-button")).toBeTruthy();
+
+    // 1. Routine photos at the top (including example past training photo)
+    expect(getByTestId("routine-photo-rp_example_01")).toBeTruthy();
+    const photoTitles = getAllByText("Ostatni Trening na Siłowni 🔥");
+    expect(photoTitles.length).toBeGreaterThanOrEqual(2); // In top carousel and in bottom cards
+
+    // 2. Profile header with streak & diamond league
     expect(getByText("Kacper Bartłomiejczak")).toBeTruthy();
+    expect(getByText("🔥 36 dni serii")).toBeTruthy();
+    expect(getByText("💎 Diamentowa Liga")).toBeTruthy();
+    expect(getByText("100 kg Wyciskanie")).toBeTruthy();
+
+    // 3. Monthly intensity chart
+    expect(getByText("Intensywność Treningów")).toBeTruthy();
+    expect(getByText("18 lip – 25 lip")).toBeTruthy();
+
+    // 4. User routines (horizontal scrollable)
+    expect(getByTestId("routines-horizontal-scroll")).toBeTruthy();
+    expect(getByText("Push (Klatka + Barki + Triceps)")).toBeTruthy();
+
+    // 5. Recent completed workouts (synchronized with top photos)
+    expect(getAllByText("Push Day — Klatka & Barki").length).toBeGreaterThanOrEqual(2);
+    expect(getAllByText("FBW Siła & Stabilizacja").length).toBeGreaterThanOrEqual(2);
+    expect(getAllByText("Pull Day — Plecy & Ramiona").length).toBeGreaterThanOrEqual(2);
+    expect(getByText("Kondycja & Brzuch (Bez zdjęcia)")).toBeTruthy();
+
+    // Navigation Pill
     expect(getByTestId("pill-navbar")).toBeTruthy();
 
-    const editBtn = getByTestId("open-settings-button");
+    // Click photo to open workout modal
+    const photoCard = getByTestId("routine-photo-rp_example_01");
     await act(async () => {
-      fireEvent.press(editBtn);
+      fireEvent.press(photoCard);
+    });
+    expect(getByTestId("past-workout-modal")).toBeTruthy();
+    expect(getAllByText("Wyciskanie sztangi na ławce poziomej").length).toBeGreaterThanOrEqual(1);
+
+    // Close modal
+    const closeBtn = getByTestId("close-past-workout-modal");
+    await act(async () => {
+      fireEvent.press(closeBtn);
+    });
+
+    // Settings navigation
+    const settingsBtn = getByTestId("profile-settings-button");
+    await act(async () => {
+      fireEvent.press(settingsBtn);
     });
     expect(router.push).toHaveBeenCalledWith("/profile");
 
