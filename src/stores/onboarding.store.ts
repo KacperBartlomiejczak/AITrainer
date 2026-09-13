@@ -1,6 +1,4 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { OnboardingFormData } from "@/schemas/onboarding.schema";
 
 interface OnboardingStoreState {
@@ -8,7 +6,7 @@ interface OnboardingStoreState {
   hasCompletedOnboarding: boolean;
   /** Saved onboarding data (null until completed) */
   onboardingData: OnboardingFormData | null;
-  /** Whether the store has been rehydrated from AsyncStorage */
+  /** Whether the store has been initialized in RAM */
   isHydrated: boolean;
 }
 
@@ -19,52 +17,38 @@ interface OnboardingStoreActions {
   updateProfile: (data: Partial<OnboardingFormData>) => void;
   /** Reset onboarding state (for testing / data deletion) */
   resetOnboarding: () => void;
-  /** Mark store as hydrated (called by persist middleware) */
+  /** Mark store as hydrated / ready in RAM */
   setHydrated: (value: boolean) => void;
 }
 
 type OnboardingStore = OnboardingStoreState & OnboardingStoreActions;
 
-export const useOnboardingStore = create<OnboardingStore>()(
-  persist(
-    (set) => ({
-      // ── State ──
+export const useOnboardingStore = create<OnboardingStore>()((set) => ({
+  // ── State (In-memory RAM) ──
+  hasCompletedOnboarding: false,
+  onboardingData: null,
+  isHydrated: true,
+
+  // ── Actions ──
+  completeOnboarding: (data: OnboardingFormData) =>
+    set({
+      hasCompletedOnboarding: true,
+      onboardingData: data,
+    }),
+
+  updateProfile: (data: Partial<OnboardingFormData>) =>
+    set((state) => ({
+      onboardingData: state.onboardingData
+        ? { ...state.onboardingData, ...data }
+        : (data as OnboardingFormData),
+    })),
+
+  resetOnboarding: () =>
+    set({
       hasCompletedOnboarding: false,
       onboardingData: null,
-      isHydrated: false,
-
-      // ── Actions ──
-      completeOnboarding: (data: OnboardingFormData) =>
-        set({
-          hasCompletedOnboarding: true,
-          onboardingData: data,
-        }),
-
-      updateProfile: (data: Partial<OnboardingFormData>) =>
-        set((state) => ({
-          onboardingData: state.onboardingData
-            ? { ...state.onboardingData, ...data }
-            : (data as OnboardingFormData),
-        })),
-
-      resetOnboarding: () =>
-        set({
-          hasCompletedOnboarding: false,
-          onboardingData: null,
-        }),
-
-      setHydrated: (value: boolean) => set({ isHydrated: value }),
     }),
-    {
-      name: "aitrainer-onboarding",
-      storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({
-        hasCompletedOnboarding: state.hasCompletedOnboarding,
-        onboardingData: state.onboardingData,
-      }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true);
-      },
-    }
-  )
-);
+
+  setHydrated: (value: boolean) => set({ isHydrated: value }),
+}));
+

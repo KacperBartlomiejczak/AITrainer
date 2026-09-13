@@ -20,7 +20,7 @@ export function PillNavbar({ activeTab: propActiveTab }: PillNavbarProps) {
       className="absolute left-0 right-0 items-center px-4"
       style={{ bottom: Math.max(insets.bottom, 12) + 6 }}
     >
-      <View className="flex-row items-center justify-between w-full max-w-sm bg-[#121214]/95 border border-[#27272A] rounded-full px-2 py-1.5 shadow-2xl backdrop-blur-md">
+      <View className="flex-row items-center justify-between w-full max-w-md bg-[#121214]/95 border border-[#27272A] rounded-full px-1.5 py-1.5 shadow-2xl backdrop-blur-md">
         {tabs.map((item) => (
           <PillNavItem
             key={item.id}

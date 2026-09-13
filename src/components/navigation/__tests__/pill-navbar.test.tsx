@@ -8,16 +8,18 @@ jest.mock("react-native-safe-area-context", () => ({
 }));
 
 describe("PillNavbar & PillNavItem", () => {
-  it("renders 3 nav tabs (Home, Trening, Profil)", async () => {
+  it("renders 4 nav tabs (Home, Trening, Ranking, Profil)", async () => {
     const { getByTestId, getByText, unmount } = await render(<PillNavbar />);
 
     expect(getByTestId("pill-navbar")).toBeTruthy();
     expect(getByTestId("pill-nav-home")).toBeTruthy();
     expect(getByTestId("pill-nav-workouts")).toBeTruthy();
+    expect(getByTestId("pill-nav-ranking")).toBeTruthy();
     expect(getByTestId("pill-nav-profile")).toBeTruthy();
 
     expect(getByText("Start")).toBeTruthy();
     expect(getByText("Trening")).toBeTruthy();
+    expect(getByText("Ranking")).toBeTruthy();
     expect(getByText("Profil")).toBeTruthy();
 
     unmount();

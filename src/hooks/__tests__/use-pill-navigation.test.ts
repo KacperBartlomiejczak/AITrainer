@@ -8,10 +8,11 @@ describe("usePillNavigation", () => {
     const { result, unmount } = await renderHook(() => usePillNavigation());
 
     expect(result.current.activeTab).toBe("home");
-    expect(result.current.tabs).toHaveLength(3);
+    expect(result.current.tabs).toHaveLength(4);
     expect(result.current.tabs.map((t) => t.id)).toEqual([
       "home",
       "workouts",
+      "ranking",
       "profile",
     ]);
 
@@ -23,6 +24,15 @@ describe("usePillNavigation", () => {
     const { result, unmount } = await renderHook(() => usePillNavigation());
 
     expect(result.current.activeTab).toBe("workouts");
+
+    unmount();
+  });
+
+  it("detects 'ranking' tab when pathname is '/ranking'", async () => {
+    (usePathname as jest.Mock).mockReturnValue("/ranking");
+    const { result, unmount } = await renderHook(() => usePillNavigation());
+
+    expect(result.current.activeTab).toBe("ranking");
 
     unmount();
   });
@@ -55,6 +65,11 @@ describe("usePillNavigation", () => {
       result.current.navigateToTab("workouts");
     });
     expect(router.push).toHaveBeenCalledWith("/workouts");
+
+    await act(async () => {
+      result.current.navigateToTab("ranking");
+    });
+    expect(router.push).toHaveBeenCalledWith("/ranking");
 
     await act(async () => {
       result.current.navigateToTab("profile");
