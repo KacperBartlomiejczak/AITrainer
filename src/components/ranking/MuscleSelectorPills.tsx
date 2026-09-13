@@ -1,13 +1,12 @@
 import React from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { cn } from "@/lib/utils";
-import type { MuscleGroup } from "@/schemas/onboarding.schema";
-import type { MuscleRankItem } from "@/schemas/ranking.schema";
+import type { RankingMuscleGroup, MuscleRankItem } from "@/schemas/ranking.schema";
 
 interface MuscleSelectorPillsProps {
   ranks: MuscleRankItem[];
-  selectedMuscle: MuscleGroup;
-  onSelectMuscle: (muscle: MuscleGroup) => void;
+  selectedMuscle: RankingMuscleGroup;
+  onSelectMuscle: (muscle: RankingMuscleGroup) => void;
 }
 
 export function MuscleSelectorPills({
@@ -33,7 +32,7 @@ export function MuscleSelectorPills({
             accessibilityState={{ selected: isSelected }}
             accessibilityLabel={`${rank.namePl}, ranga: ${rank.league.name}`}
             className={cn(
-              "flex-row items-center gap-2 px-3.5 py-2 rounded-2xl border transition-all active:scale-95",
+              "flex-row items-center gap-2 px-3.5 py-2 rounded-2xl border active:opacity-80",
               isSelected
                 ? "bg-[#1E1E22] border-[#007AFF] shadow-lg shadow-[#007AFF]/20"
                 : "bg-[#121214] border-[#27272A]"

@@ -25,6 +25,12 @@ SplashScreenModule.preventAutoHideAsync().catch(() => {
   /* ignore already prevented */
 });
 
+// Force the initial route to "/" so Expo Router doesn't restore a cached
+// deep-link (e.g. /ranking) before NavigationContainer is fully mounted.
+export const unstable_settings = {
+  initialRouteName: "index",
+};
+
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();

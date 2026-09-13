@@ -51,16 +51,26 @@ describe("useRankingScreen", () => {
     unmount();
   });
 
-  it("allows selecting different muscle groups", async () => {
+  it("allows selecting biceps and triceps with auto perspective sync", async () => {
     const { result, unmount } = await renderHook(() => useRankingScreen());
 
+    // Selecting triceps should auto-switch orientation to "back"
     await act(async () => {
-      result.current.setSelectedMuscle("legs");
+      result.current.setSelectedMuscle("triceps");
     });
-    expect(result.current.selectedMuscle).toBe("legs");
-    expect(result.current.selectedMuscleRank.muscle).toBe("legs");
-    expect(result.current.selectedMuscleRank.currentKg).toBe(130);
-    expect(result.current.selectedMuscleRank.league.id).toBe("diamond");
+    expect(result.current.selectedMuscle).toBe("triceps");
+    expect(result.current.bodyOrientation).toBe("back");
+    expect(result.current.selectedMuscleRank.muscle).toBe("triceps");
+    expect(result.current.selectedMuscleRank.currentKg).toBe(45);
+
+    // Selecting biceps should auto-switch orientation to "front"
+    await act(async () => {
+      result.current.setSelectedMuscle("biceps");
+    });
+    expect(result.current.selectedMuscle).toBe("biceps");
+    expect(result.current.bodyOrientation).toBe("front");
+    expect(result.current.selectedMuscleRank.muscle).toBe("biceps");
+    expect(result.current.selectedMuscleRank.currentKg).toBe(35);
 
     unmount();
   });

@@ -34,6 +34,21 @@ describe("RankingScreen", () => {
     unmount();
   });
 
+  it("switches to standards view and renders all muscle standards", async () => {
+    const { getByTestId, getByText, unmount } = await render(<RankingScreen />);
+
+    const standardsTab = getByTestId("view-tab-standards");
+    await act(async () => {
+      fireEvent.press(standardsTab);
+    });
+
+    expect(getByTestId("ranking-standards-view")).toBeTruthy();
+    expect(getByText(/Oficjalne Standardy Siłowe AI Trainer/)).toBeTruthy();
+    expect(getByTestId("standard-card-chest")).toBeTruthy();
+
+    unmount();
+  });
+
   it("switches to standards view and allows opening modal", async () => {
     const { getByTestId, getByText, unmount } = await render(<RankingScreen />);
 
@@ -51,4 +66,30 @@ describe("RankingScreen", () => {
 
     unmount();
   });
+
+  it("navigates to leaderboard and standards from quick-jump cards in chart view", async () => {
+    const { getByTestId, unmount } = await render(<RankingScreen />);
+
+    // Jump to leaderboard from shortcut
+    const shortcutLeaderboard = getByTestId("shortcut-to-leaderboard");
+    await act(async () => {
+      fireEvent.press(shortcutLeaderboard);
+    });
+    expect(getByTestId("ranking-leaderboard-view")).toBeTruthy();
+
+    // Switch back to chart
+    await act(async () => {
+      fireEvent.press(getByTestId("view-tab-chart"));
+    });
+
+    // Jump to standards from shortcut
+    const shortcutStandards = getByTestId("shortcut-to-standards");
+    await act(async () => {
+      fireEvent.press(shortcutStandards);
+    });
+    expect(getByTestId("ranking-standards-view")).toBeTruthy();
+
+    unmount();
+  });
 });
+

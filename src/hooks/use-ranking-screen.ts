@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
 import { useOnboardingStore } from "@/stores/onboarding.store";
-import type { MuscleGroup } from "@/schemas/onboarding.schema";
 import {
   STRENGTH_LEAGUES,
   type StrengthLeagueId,
@@ -9,6 +8,7 @@ import {
   MUSCLE_BENCHMARK_CONFIGS,
   calculateNextLeagueProgress,
   calculateOverallRank,
+  type RankingMuscleGroup,
   type MuscleRankItem,
   type LeaderboardUser,
 } from "@/schemas/ranking.schema";
@@ -16,12 +16,13 @@ import {
 export type RankingActiveView = "chart" | "leaderboard" | "standards";
 export type BodyOrientation = "front" | "back";
 
-export const INITIAL_MUSCLE_RECORDS: Record<MuscleGroup, number> = {
+export const INITIAL_MUSCLE_RECORDS: Record<RankingMuscleGroup, number> = {
   chest: 100, // 100 kg na klatę = Diamentowa Liga!
   back: 110,
   legs: 130,
   shoulders: 50,
-  arms: 35,
+  biceps: 35,
+  triceps: 45,
   abs: 55,
 };
 
@@ -31,7 +32,7 @@ const DEFAULT_LEADERBOARD_USERS: LeaderboardUser[] = [
     rank: 1,
     displayName: "Kacper (Ty)",
     league: STRENGTH_LEAGUES.diamond,
-    totalScore: 4890,
+    totalScore: 5490,
     topMuscleNamePl: "Klatka piersiowa",
     topRecordSummary: "100 kg (Diament)",
     isCurrentUser: true,
@@ -41,7 +42,7 @@ const DEFAULT_LEADERBOARD_USERS: LeaderboardUser[] = [
     rank: 2,
     displayName: "Mateusz K.",
     league: STRENGTH_LEAGUES.diamond,
-    totalScore: 4820,
+    totalScore: 5320,
     topMuscleNamePl: "Klatka piersiowa",
     topRecordSummary: "105 kg (Diament)",
     isCurrentUser: false,
@@ -51,7 +52,7 @@ const DEFAULT_LEADERBOARD_USERS: LeaderboardUser[] = [
     rank: 3,
     displayName: "Jakub W.",
     league: STRENGTH_LEAGUES.master,
-    totalScore: 5210,
+    totalScore: 5810,
     topMuscleNamePl: "Plecy",
     topRecordSummary: "185 kg (Mistrz)",
     isCurrentUser: false,
@@ -61,7 +62,7 @@ const DEFAULT_LEADERBOARD_USERS: LeaderboardUser[] = [
     rank: 4,
     displayName: "Michał S.",
     league: STRENGTH_LEAGUES.platinum,
-    totalScore: 4150,
+    totalScore: 4650,
     topMuscleNamePl: "Nogi",
     topRecordSummary: "125 kg (Platyna)",
     isCurrentUser: false,
@@ -71,7 +72,7 @@ const DEFAULT_LEADERBOARD_USERS: LeaderboardUser[] = [
     rank: 5,
     displayName: "Tomasz Z.",
     league: STRENGTH_LEAGUES.gold,
-    totalScore: 3600,
+    totalScore: 3900,
     topMuscleNamePl: "Klatka piersiowa",
     topRecordSummary: "85 kg (Złoto)",
     isCurrentUser: false,
@@ -81,7 +82,7 @@ const DEFAULT_LEADERBOARD_USERS: LeaderboardUser[] = [
     rank: 6,
     displayName: "Piotr N.",
     league: STRENGTH_LEAGUES.gold,
-    totalScore: 3480,
+    totalScore: 3780,
     topMuscleNamePl: "Plecy",
     topRecordSummary: "115 kg (Złoto)",
     isCurrentUser: false,
@@ -91,7 +92,7 @@ const DEFAULT_LEADERBOARD_USERS: LeaderboardUser[] = [
     rank: 7,
     displayName: "Adam L.",
     league: STRENGTH_LEAGUES.silver,
-    totalScore: 2850,
+    totalScore: 3150,
     topMuscleNamePl: "Nogi",
     topRecordSummary: "75 kg (Srebro)",
     isCurrentUser: false,
@@ -102,9 +103,10 @@ export function useRankingScreen() {
   const [activeView, setActiveView] = useState<RankingActiveView>("chart");
   const [bodyOrientation, setBodyOrientation] =
     useState<BodyOrientation>("front");
-  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>("chest");
+  const [selectedMuscle, setSelectedMuscle] =
+    useState<RankingMuscleGroup>("chest");
   const [muscleRecords, setMuscleRecords] = useState<
-    Record<MuscleGroup, number>
+    Record<RankingMuscleGroup, number>
   >(INITIAL_MUSCLE_RECORDS);
   const [selectedLeagueFilter, setSelectedLeagueFilter] = useState<
     "all" | StrengthLeagueId
@@ -119,8 +121,19 @@ export function useRankingScreen() {
     setBodyOrientation((prev) => (prev === "front" ? "back" : "front"));
   }, []);
 
+  const selectMuscleWithSideSync = useCallback(
+    (muscle: RankingMuscleGroup) => {
+      setSelectedMuscle(muscle);
+      const config = MUSCLE_BENCHMARK_CONFIGS[muscle];
+      if (config && config.viewSide !== bodyOrientation) {
+        setBodyOrientation(config.viewSide);
+      }
+    },
+    [bodyOrientation],
+  );
+
   const updateMuscleRecord = useCallback(
-    (muscle: MuscleGroup, value: number, isDelta = false) => {
+    (muscle: RankingMuscleGroup, value: number, isDelta = false) => {
       setMuscleRecords((prev) => {
         const current = prev[muscle] ?? 0;
         const nextVal = isDelta ? Math.max(0, current + value) : Math.max(0, value);
@@ -138,13 +151,14 @@ export function useRankingScreen() {
   }, []);
 
   const muscleRanks = useMemo<MuscleRankItem[]>(() => {
-    const orderedMuscles: MuscleGroup[] = [
+    const orderedMuscles: RankingMuscleGroup[] = [
       "chest",
+      "shoulders",
+      "biceps",
+      "triceps",
+      "abs",
       "back",
       "legs",
-      "shoulders",
-      "arms",
-      "abs",
     ];
 
     return orderedMuscles.map((muscle) => {
@@ -157,6 +171,7 @@ export function useRankingScreen() {
         namePl: config.namePl,
         emoji: config.emoji,
         benchmarkExercise: config.exerciseName,
+        viewSide: config.viewSide,
         currentKg: kg,
         league: progress.currentLeague,
         nextLeague: progress.nextLeague,
@@ -215,7 +230,7 @@ export function useRankingScreen() {
     setBodyOrientation,
     toggleBodyOrientation,
     selectedMuscle,
-    setSelectedMuscle,
+    setSelectedMuscle: selectMuscleWithSideSync,
     muscleRecords,
     updateMuscleRecord,
     resetMuscleRecords,

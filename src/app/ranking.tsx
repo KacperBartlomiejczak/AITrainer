@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRankingScreen } from "@/hooks/use-ranking-screen";
 import {
@@ -9,9 +9,9 @@ import {
   MuscleRankCard,
   RankingLeaderboard,
   LeagueStandardsModal,
+  RankingStandardsView,
 } from "@/components/ranking";
 import { PillNavbar } from "@/components/navigation";
-import { STRENGTH_LEAGUES } from "@/schemas/user-profile-screen.schema";
 
 export default function RankingScreen() {
   const insets = useSafeAreaInsets();
@@ -88,6 +88,57 @@ export default function RankingScreen() {
                 item={selectedMuscleRank}
                 onUpdateKg={updateMuscleRecord}
               />
+
+              {/* Quick Jump Cards to Leaderboard and Standards */}
+              <View className="flex-col gap-2.5 pt-1">
+                <Text className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">
+                  Więcej sekcji rankingu
+                </Text>
+
+                <Pressable
+                  testID="shortcut-to-leaderboard"
+                  onPress={() => setActiveView("leaderboard")}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Przejdź do tabeli rankingu"
+                  className="p-4 rounded-2xl bg-[#121214] border border-[#27272A] flex-row items-center justify-between active:bg-[#1E1E22]"
+                >
+                  <View className="flex-row items-center gap-3">
+                    <Text className="text-2xl">🏆</Text>
+                    <View className="flex-col">
+                      <Text className="text-sm font-black text-white">
+                        Tabela Rankingu Społeczności
+                      </Text>
+                      <Text className="text-xs text-[#71717A]">
+                        Porównaj swoje punkty i zobacz podium
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className="text-sm font-bold text-[#007AFF]">Przejdź →</Text>
+                </Pressable>
+
+                <Pressable
+                  testID="shortcut-to-standards"
+                  onPress={() => setActiveView("standards")}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Przejdź do standardów siłowych"
+                  className="p-4 rounded-2xl bg-[#121214] border border-[#27272A] flex-row items-center justify-between active:bg-[#1E1E22]"
+                >
+                  <View className="flex-row items-center gap-3">
+                    <Text className="text-2xl">📜</Text>
+                    <View className="flex-col">
+                      <Text className="text-sm font-black text-white">
+                        Wszystkie Standardy Siłowe
+                      </Text>
+                      <Text className="text-xs text-[#71717A]">
+                        Progi wagowe dla wszystkich 7 partii ciała
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className="text-sm font-bold text-[#007AFF]">Sprawdź →</Text>
+                </Pressable>
+              </View>
             </View>
           )}
 
@@ -100,38 +151,8 @@ export default function RankingScreen() {
             />
           )}
 
-          {/* View 3: Standardy Lig (Standards Overview) */}
-          {activeView === "standards" && (
-            <View className="flex-col gap-3">
-              <Text className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider">
-                Wszystkie Ligi Siłowe w AI Trainer:
-              </Text>
-              {Object.values(STRENGTH_LEAGUES).reverse().map((league) => (
-                <View
-                  key={league.id}
-                  className="p-4 rounded-2xl bg-[#121214] border border-[#27272A] flex-col gap-1.5"
-                >
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-2">
-                      <Text className="text-2xl">{league.icon}</Text>
-                      <Text
-                        className="text-base font-black"
-                        style={{ color: league.badgeColor }}
-                      >
-                        {league.name}
-                      </Text>
-                    </View>
-                    <Text className="text-xs font-bold text-white">
-                      min. {league.minKg} kg na klatę
-                    </Text>
-                  </View>
-                  <Text className="text-xs text-[#71717A]">
-                    {league.description}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
+          {/* View 3: Standardy Lig (Strength Standards Overview) */}
+          {activeView === "standards" && <RankingStandardsView />}
         </View>
       </ScrollView>
 

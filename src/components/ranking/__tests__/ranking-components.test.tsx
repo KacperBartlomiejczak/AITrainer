@@ -6,14 +6,21 @@ import { MuscleSelectorPills } from "../MuscleSelectorPills";
 import { RankingLeaderboard } from "../RankingLeaderboard";
 import { RankingHeader } from "../RankingHeader";
 import { LeagueStandardsModal } from "../LeagueStandardsModal";
+import { MuscleStandardCard } from "../MuscleStandardCard";
+import { RankingStandardsView } from "../RankingStandardsView";
 import { STRENGTH_LEAGUES } from "@/schemas/user-profile-screen.schema";
-import type { MuscleRankItem, LeaderboardUser } from "@/schemas/ranking.schema";
+import {
+  MUSCLE_BENCHMARK_CONFIGS,
+  type MuscleRankItem,
+  type LeaderboardUser,
+} from "@/schemas/ranking.schema";
 
 const MOCK_CHEST_RANK: MuscleRankItem = {
   muscle: "chest",
   namePl: "Klatka piersiowa",
   emoji: "🫁",
   benchmarkExercise: "Wyciskanie sztangi leżąc",
+  viewSide: "front",
   currentKg: 100,
   league: STRENGTH_LEAGUES.diamond,
   nextLeague: STRENGTH_LEAGUES.master,
@@ -28,6 +35,7 @@ const MOCK_RANKS: MuscleRankItem[] = [
     namePl: "Plecy",
     emoji: "🔙",
     benchmarkExercise: "Martwy ciąg",
+    viewSide: "back",
     currentKg: 110,
     league: STRENGTH_LEAGUES.gold,
     nextLeague: STRENGTH_LEAGUES.platinum,
@@ -39,6 +47,7 @@ const MOCK_RANKS: MuscleRankItem[] = [
     namePl: "Nogi",
     emoji: "🦵",
     benchmarkExercise: "Przysiad ze sztangą",
+    viewSide: "front",
     currentKg: 130,
     league: STRENGTH_LEAGUES.diamond,
     nextLeague: STRENGTH_LEAGUES.master,
@@ -50,6 +59,7 @@ const MOCK_RANKS: MuscleRankItem[] = [
     namePl: "Barki",
     emoji: "🤸",
     benchmarkExercise: "Wyciskanie żołnierskie (OHP)",
+    viewSide: "front",
     currentKg: 50,
     league: STRENGTH_LEAGUES.gold,
     nextLeague: STRENGTH_LEAGUES.platinum,
@@ -57,10 +67,11 @@ const MOCK_RANKS: MuscleRankItem[] = [
     progressPercent: 33,
   },
   {
-    muscle: "arms",
-    namePl: "Ramiona",
+    muscle: "biceps",
+    namePl: "Biceps",
     emoji: "💪",
     benchmarkExercise: "Uginanie ramion ze sztangą",
+    viewSide: "front",
     currentKg: 35,
     league: STRENGTH_LEAGUES.gold,
     nextLeague: STRENGTH_LEAGUES.platinum,
@@ -68,10 +79,23 @@ const MOCK_RANKS: MuscleRankItem[] = [
     progressPercent: 50,
   },
   {
+    muscle: "triceps",
+    namePl: "Triceps",
+    emoji: "🦾",
+    benchmarkExercise: "Dipsy na poręczach z obciążeniem",
+    viewSide: "back",
+    currentKg: 45,
+    league: STRENGTH_LEAGUES.gold,
+    nextLeague: STRENGTH_LEAGUES.platinum,
+    kgRemaining: 10,
+    progressPercent: 33,
+  },
+  {
     muscle: "abs",
     namePl: "Brzuch",
     emoji: "🎯",
     benchmarkExercise: "Allahy na wyciągu klęcząc",
+    viewSide: "front",
     currentKg: 55,
     league: STRENGTH_LEAGUES.gold,
     nextLeague: STRENGTH_LEAGUES.platinum,
@@ -270,4 +294,53 @@ describe("Ranking Components", () => {
       unmount();
     });
   });
+
+  describe("MuscleStandardCard", () => {
+    it("renders muscle benchmark config and threshold weights", async () => {
+      const { getByText, getByTestId, unmount } = await render(
+        <MuscleStandardCard config={MUSCLE_BENCHMARK_CONFIGS.chest} />,
+      );
+
+      expect(getByTestId("standard-card-chest")).toBeTruthy();
+      expect(getByText("Klatka piersiowa")).toBeTruthy();
+      expect(getByText("Wyciskanie sztangi leżąc")).toBeTruthy();
+      expect(getByText("Przód")).toBeTruthy();
+      expect(getByText("≥ 100 kg")).toBeTruthy();
+
+      unmount();
+    });
+  });
+
+  describe("RankingStandardsView", () => {
+    it("renders all standards and filters by selected muscle chip", async () => {
+      const { getByText, getByTestId, queryByTestId, unmount } = await render(
+        <RankingStandardsView />,
+      );
+
+      expect(getByTestId("ranking-standards-view")).toBeTruthy();
+      expect(getByText(/Oficjalne Standardy Siłowe/)).toBeTruthy();
+      expect(getByTestId("standard-card-chest")).toBeTruthy();
+      expect(getByTestId("standard-card-legs")).toBeTruthy();
+      expect(getByTestId("standard-card-back")).toBeTruthy();
+
+      // Filter by biceps
+      await act(async () => {
+        fireEvent.press(getByTestId("standards-filter-biceps"));
+      });
+
+      expect(getByTestId("standard-card-biceps")).toBeTruthy();
+      expect(queryByTestId("standard-card-chest")).toBeNull();
+
+      // Filter back to all
+      await act(async () => {
+        fireEvent.press(getByTestId("standards-filter-all"));
+      });
+
+      expect(getByTestId("standard-card-chest")).toBeTruthy();
+      expect(getByTestId("standard-card-biceps")).toBeTruthy();
+
+      unmount();
+    });
+  });
 });
+

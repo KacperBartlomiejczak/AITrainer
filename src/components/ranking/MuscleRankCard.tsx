@@ -2,12 +2,11 @@ import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { Plus, Minus } from "lucide-react-native";
 import { Badge } from "@/components/ui/badge";
-import { MUSCLE_BENCHMARK_CONFIGS, type MuscleRankItem } from "@/schemas/ranking.schema";
-import type { MuscleGroup } from "@/schemas/onboarding.schema";
+import { MUSCLE_BENCHMARK_CONFIGS, type MuscleRankItem, type RankingMuscleGroup } from "@/schemas/ranking.schema";
 
 interface MuscleRankCardProps {
   item: MuscleRankItem;
-  onUpdateKg: (muscle: MuscleGroup, deltaOrVal: number, isDelta: boolean) => void;
+  onUpdateKg: (muscle: RankingMuscleGroup, deltaOrVal: number, isDelta: boolean) => void;
 }
 
 export function MuscleRankCard({ item, onUpdateKg }: MuscleRankCardProps) {

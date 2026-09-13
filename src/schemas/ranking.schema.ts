@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { MuscleGroupSchema, type MuscleGroup } from "./onboarding.schema";
 import {
   StrengthLeagueSchema,
   STRENGTH_LEAGUES,
@@ -7,21 +6,36 @@ import {
   type StrengthLeague,
 } from "./user-profile-screen.schema";
 
+// ── Ranking Muscle Groups (Biceps front, Triceps back) ──────────
+export const RankingMuscleGroupSchema = z.enum([
+  "chest",
+  "back",
+  "legs",
+  "shoulders",
+  "biceps",
+  "triceps",
+  "abs",
+]);
+
+export type RankingMuscleGroup = z.infer<typeof RankingMuscleGroupSchema>;
+
 // ── Muscle Standards Configuration ──────────────────────────────
 export interface MuscleBenchmarkConfig {
-  muscle: MuscleGroup;
+  muscle: RankingMuscleGroup;
   namePl: string;
   emoji: string;
   exerciseName: string;
+  viewSide: "front" | "back";
   thresholds: Record<StrengthLeagueId, number>;
 }
 
-export const MUSCLE_BENCHMARK_CONFIGS: Record<MuscleGroup, MuscleBenchmarkConfig> = {
+export const MUSCLE_BENCHMARK_CONFIGS: Record<RankingMuscleGroup, MuscleBenchmarkConfig> = {
   chest: {
     muscle: "chest",
     namePl: "Klatka piersiowa",
     emoji: "🫁",
     exerciseName: "Wyciskanie sztangi leżąc",
+    viewSide: "front",
     thresholds: {
       bronze: 0,
       silver: 50,
@@ -37,6 +51,7 @@ export const MUSCLE_BENCHMARK_CONFIGS: Record<MuscleGroup, MuscleBenchmarkConfig
     namePl: "Plecy",
     emoji: "🔙",
     exerciseName: "Martwy ciąg",
+    viewSide: "back",
     thresholds: {
       bronze: 0,
       silver: 70,
@@ -52,6 +67,7 @@ export const MUSCLE_BENCHMARK_CONFIGS: Record<MuscleGroup, MuscleBenchmarkConfig
     namePl: "Nogi",
     emoji: "🦵",
     exerciseName: "Przysiad ze sztangą",
+    viewSide: "front",
     thresholds: {
       bronze: 0,
       silver: 60,
@@ -67,6 +83,7 @@ export const MUSCLE_BENCHMARK_CONFIGS: Record<MuscleGroup, MuscleBenchmarkConfig
     namePl: "Barki",
     emoji: "🤸",
     exerciseName: "Wyciskanie żołnierskie (OHP)",
+    viewSide: "front",
     thresholds: {
       bronze: 0,
       silver: 30,
@@ -77,11 +94,12 @@ export const MUSCLE_BENCHMARK_CONFIGS: Record<MuscleGroup, MuscleBenchmarkConfig
       titan: 100,
     },
   },
-  arms: {
-    muscle: "arms",
-    namePl: "Ramiona",
+  biceps: {
+    muscle: "biceps",
+    namePl: "Biceps",
     emoji: "💪",
     exerciseName: "Uginanie ramion ze sztangą",
+    viewSide: "front",
     thresholds: {
       bronze: 0,
       silver: 20,
@@ -92,11 +110,28 @@ export const MUSCLE_BENCHMARK_CONFIGS: Record<MuscleGroup, MuscleBenchmarkConfig
       titan: 70,
     },
   },
+  triceps: {
+    muscle: "triceps",
+    namePl: "Triceps",
+    emoji: "🦾",
+    exerciseName: "Dipsy na poręczach z obciążeniem",
+    viewSide: "back",
+    thresholds: {
+      bronze: 0,
+      silver: 25,
+      gold: 40,
+      platinum: 55,
+      diamond: 65,
+      master: 80,
+      titan: 95,
+    },
+  },
   abs: {
     muscle: "abs",
     namePl: "Brzuch",
     emoji: "🎯",
     exerciseName: "Allahy na wyciągu klęcząc",
+    viewSide: "front",
     thresholds: {
       bronze: 0,
       silver: 35,
@@ -129,9 +164,40 @@ const LEAGUE_POINTS: Record<StrengthLeagueId, number> = {
   titan: 1400,
 };
 
+// ── Slug to Ranking Muscle Mapper ───────────────────────────────
+export function mapSlugToRankingMuscle(slug: string): RankingMuscleGroup | null {
+  switch (slug) {
+    case "chest":
+      return "chest";
+    case "deltoids":
+      return "shoulders";
+    case "biceps":
+      return "biceps";
+    case "triceps":
+      return "triceps";
+    case "abs":
+    case "obliques":
+      return "abs";
+    case "upper-back":
+    case "lower-back":
+    case "trapezius":
+      return "back";
+    case "quadriceps":
+    case "calves":
+    case "gluteal":
+    case "hamstring":
+    case "adductors":
+    case "abductors":
+    case "tibialis":
+      return "legs";
+    default:
+      return null;
+  }
+}
+
 // ── League Calculator Functions ──────────────────────────────────
 export function calculateMuscleLeague(
-  muscle: MuscleGroup,
+  muscle: RankingMuscleGroup,
   currentKg: number,
 ): StrengthLeague {
   const config = MUSCLE_BENCHMARK_CONFIGS[muscle];
@@ -147,7 +213,7 @@ export function calculateMuscleLeague(
 }
 
 export function calculateNextLeagueProgress(
-  muscle: MuscleGroup,
+  muscle: RankingMuscleGroup,
   currentKg: number,
 ): {
   currentLeague: StrengthLeague;
@@ -200,7 +266,7 @@ export function calculateNextLeagueProgress(
 }
 
 export function calculateOverallRank(
-  records: Record<MuscleGroup, number>,
+  records: Record<RankingMuscleGroup, number>,
 ): {
   overallLeague: StrengthLeague;
   totalScore: number;
@@ -208,7 +274,7 @@ export function calculateOverallRank(
   let totalScore = 0;
   const leagueCounts: Partial<Record<StrengthLeagueId, number>> = {};
 
-  (Object.keys(records) as MuscleGroup[]).forEach((muscle) => {
+  (Object.keys(records) as RankingMuscleGroup[]).forEach((muscle) => {
     const kg = records[muscle] ?? 0;
     const league = calculateMuscleLeague(muscle, kg);
     totalScore += LEAGUE_POINTS[league.id] + Math.round(kg);
@@ -242,10 +308,11 @@ export function calculateOverallRank(
 
 // ── Zod Schemas ─────────────────────────────────────────────────
 export const MuscleRankItemSchema = z.object({
-  muscle: MuscleGroupSchema,
+  muscle: RankingMuscleGroupSchema,
   namePl: z.string().min(1),
   emoji: z.string().min(1),
   benchmarkExercise: z.string().min(1),
+  viewSide: z.enum(["front", "back"]),
   currentKg: z.number().nonnegative(),
   league: StrengthLeagueSchema,
   nextLeague: StrengthLeagueSchema.nullable(),
@@ -267,8 +334,8 @@ export const LeaderboardUserSchema = z.object({
 export const RankingScreenDataSchema = z.object({
   overallLeague: StrengthLeagueSchema,
   totalScore: z.number().nonnegative(),
-  selectedMuscle: MuscleGroupSchema,
-  muscleRanks: z.array(MuscleRankItemSchema).length(6),
+  selectedMuscle: RankingMuscleGroupSchema,
+  muscleRanks: z.array(MuscleRankItemSchema).length(7),
   leaderboard: z.array(LeaderboardUserSchema).min(1),
 });
 

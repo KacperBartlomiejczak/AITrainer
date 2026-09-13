@@ -23,6 +23,81 @@ export function RankingHeader({
 }: RankingHeaderProps) {
   return (
     <View className="flex-col gap-4">
+      {/* Segmented View Switcher - Top Level */}
+      <View className="flex-row items-center justify-between p-1.5 bg-[#121214] border border-[#27272A] rounded-2xl">
+        <Pressable
+          testID="view-tab-chart"
+          onPress={() => onViewChange("chart")}
+          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel="Widok wykresu sylwetki ciała"
+          accessibilityState={{ selected: activeView === "chart" }}
+          className={cn(
+            "flex-1 py-2.5 rounded-xl items-center justify-center active:opacity-90",
+            activeView === "chart"
+              ? "bg-[#007AFF] shadow-md shadow-[#007AFF]/30"
+              : "bg-transparent"
+          )}
+        >
+          <Text
+            className={cn(
+              "text-xs font-black tracking-tight",
+              activeView === "chart" ? "text-white" : "text-[#71717A]"
+            )}
+          >
+            🧍 Wykres Ciała
+          </Text>
+        </Pressable>
+
+        <Pressable
+          testID="view-tab-leaderboard"
+          onPress={() => onViewChange("leaderboard")}
+          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel="Widok tabeli rankingu"
+          accessibilityState={{ selected: activeView === "leaderboard" }}
+          className={cn(
+            "flex-1 py-2.5 rounded-xl items-center justify-center active:opacity-90",
+            activeView === "leaderboard"
+              ? "bg-[#007AFF] shadow-md shadow-[#007AFF]/30"
+              : "bg-transparent"
+          )}
+        >
+          <Text
+            className={cn(
+              "text-xs font-black tracking-tight",
+              activeView === "leaderboard" ? "text-white" : "text-[#71717A]"
+            )}
+          >
+            🏆 Tabela Ligi
+          </Text>
+        </Pressable>
+
+        <Pressable
+          testID="view-tab-standards"
+          onPress={() => onViewChange("standards")}
+          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel="Widok standardów siłowych"
+          accessibilityState={{ selected: activeView === "standards" }}
+          className={cn(
+            "flex-1 py-2.5 rounded-xl items-center justify-center active:opacity-90",
+            activeView === "standards"
+              ? "bg-[#007AFF] shadow-md shadow-[#007AFF]/30"
+              : "bg-transparent"
+          )}
+        >
+          <Text
+            className={cn(
+              "text-xs font-black tracking-tight",
+              activeView === "standards" ? "text-white" : "text-[#71717A]"
+            )}
+          >
+            📜 Standardy
+          </Text>
+        </Pressable>
+      </View>
+
       {/* User Overall Strength Card */}
       <View className="rounded-3xl bg-[#121214] border border-[#27272A] p-5 flex-col gap-3 shadow-xl">
         <View className="flex-row items-center justify-between">
@@ -44,6 +119,7 @@ export function RankingHeader({
           <Pressable
             testID="btn-open-standards"
             onPress={onOpenStandards}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
             accessibilityLabel="Informacje o ligach i zasadach"
             className="flex-row items-center gap-1.5 px-3 py-2 rounded-xl bg-[#1E1E22] border border-[#27272A] active:bg-[#27272A]"
@@ -67,69 +143,7 @@ export function RankingHeader({
           </Badge>
         </View>
       </View>
-
-      {/* Segmented View Switcher */}
-      <View className="flex-row items-center justify-between p-1 bg-[#121214] border border-[#27272A] rounded-2xl">
-        <Pressable
-          testID="view-tab-chart"
-          onPress={() => onViewChange("chart")}
-          accessibilityRole="button"
-          accessibilityState={{ selected: activeView === "chart" }}
-          className={cn(
-            "flex-1 py-2.5 rounded-xl items-center justify-center transition-all",
-            activeView === "chart" ? "bg-[#007AFF] shadow-md shadow-[#007AFF]/30" : "bg-transparent"
-          )}
-        >
-          <Text
-            className={cn(
-              "text-xs font-black tracking-tight",
-              activeView === "chart" ? "text-white" : "text-[#71717A]"
-            )}
-          >
-            🧍 Wykres Ciała
-          </Text>
-        </Pressable>
-
-        <Pressable
-          testID="view-tab-leaderboard"
-          onPress={() => onViewChange("leaderboard")}
-          accessibilityRole="button"
-          accessibilityState={{ selected: activeView === "leaderboard" }}
-          className={cn(
-            "flex-1 py-2.5 rounded-xl items-center justify-center transition-all",
-            activeView === "leaderboard" ? "bg-[#007AFF] shadow-md shadow-[#007AFF]/30" : "bg-transparent"
-          )}
-        >
-          <Text
-            className={cn(
-              "text-xs font-black tracking-tight",
-              activeView === "leaderboard" ? "text-white" : "text-[#71717A]"
-            )}
-          >
-            🏆 Tabela Ligi
-          </Text>
-        </Pressable>
-
-        <Pressable
-          testID="view-tab-standards"
-          onPress={() => onViewChange("standards")}
-          accessibilityRole="button"
-          accessibilityState={{ selected: activeView === "standards" }}
-          className={cn(
-            "flex-1 py-2.5 rounded-xl items-center justify-center transition-all",
-            activeView === "standards" ? "bg-[#007AFF] shadow-md shadow-[#007AFF]/30" : "bg-transparent"
-          )}
-        >
-          <Text
-            className={cn(
-              "text-xs font-black tracking-tight",
-              activeView === "standards" ? "text-white" : "text-[#71717A]"
-            )}
-          >
-            📜 Standardy
-          </Text>
-        </Pressable>
-      </View>
     </View>
   );
+
 }

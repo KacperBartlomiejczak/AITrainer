@@ -42,7 +42,17 @@ export function RankingLeaderboard({
   };
 
   return (
-    <View className="flex-col gap-4">
+    <View testID="ranking-leaderboard-view" className="flex-col gap-4">
+      {/* Leaderboard Header Banner */}
+      <View className="p-4 rounded-3xl bg-[#121214] border border-[#27272A] flex-col gap-1.5 shadow-md">
+        <Text className="text-sm font-black text-white">
+          🏆 Oficjalna Tabela Rankingu Społeczności
+        </Text>
+        <Text className="text-xs text-[#A1A1AA] leading-relaxed">
+          Zdobywaj punkty siłowe za ciężary w ćwiczeniach bazowych i walcz o pozycję na podium!
+        </Text>
+      </View>
+
       {/* League Filter Chips */}
       <ScrollView
         horizontal
@@ -57,11 +67,12 @@ export function RankingLeaderboard({
               key={f.id}
               testID={`leaderboard-filter-${f.id}`}
               onPress={() => onSelectFilter(f.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
               accessibilityLabel={`Filtruj: ${f.label}`}
               className={cn(
-                "px-3 py-1.5 rounded-full border transition-all active:scale-95",
+                "px-3 py-1.5 rounded-full border active:opacity-80",
                 isSelected
                   ? "bg-[#007AFF] border-[#007AFF]"
                   : "bg-[#121214] border-[#27272A]"
@@ -149,7 +160,7 @@ export function RankingLeaderboard({
                   </Text>
                 </Badge>
                 <Text className="text-xs font-black text-white">
-                  {user.totalScore.toLocaleString("pl-PL")}{" "}
+                  {user.totalScore.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")}{" "}
                   <Text className="text-[10px] text-[#71717A]">pkt</Text>
                 </Text>
               </View>
@@ -159,4 +170,5 @@ export function RankingLeaderboard({
       </View>
     </View>
   );
+
 }
