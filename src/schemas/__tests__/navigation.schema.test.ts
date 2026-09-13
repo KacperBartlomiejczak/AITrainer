@@ -2,6 +2,8 @@ import {
   NavTabIdSchema,
   NavItemSchema,
   NavTabListSchema,
+  OnboardingRedirectRouteSchema,
+  OnboardingGuardInputSchema,
 } from "../navigation.schema";
 
 describe("navigation.schema", () => {
@@ -53,5 +55,24 @@ describe("navigation.schema", () => {
 
     // 2 items should fail
     expect(NavTabListSchema.safeParse(threeItems.slice(0, 2)).success).toBe(false);
+  });
+
+  it("accepts only known onboarding redirect routes", () => {
+    expect(OnboardingRedirectRouteSchema.safeParse("/").success).toBe(true);
+    expect(OnboardingRedirectRouteSchema.safeParse("/(onboarding)/step-name").success).toBe(true);
+    expect(OnboardingRedirectRouteSchema.safeParse("/(onboarding)").success).toBe(false);
+  });
+
+  it("validates onboarding guard input", () => {
+    const input = {
+      isHydrated: true,
+      isSplashActive: false,
+      hasCompletedOnboarding: false,
+      segments: ["(onboarding)", "step-name"],
+    };
+    expect(OnboardingGuardInputSchema.safeParse(input).success).toBe(true);
+    expect(
+      OnboardingGuardInputSchema.safeParse({ ...input, segments: "(onboarding)" }).success,
+    ).toBe(false);
   });
 });

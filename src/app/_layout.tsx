@@ -1,3 +1,4 @@
+import { resolveOnboardingRedirect } from "@/lib/onboarding-redirect";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreenModule from "expo-splash-screen";
@@ -52,28 +53,17 @@ export default function RootLayout() {
   const isSplashActive = showSplash && !onSplash;
 
   useEffect(() => {
-    // Only navigate after store is hydrated in RAM and splash completes
-    if (!isHydrated || isSplashActive) return;
+    const target = resolveOnboardingRedirect({
+      isHydrated,
+      isSplashActive,
+      hasCompletedOnboarding,
+      segments: segmentsKey ? segmentsKey.split("/") : [],
+    });
 
-    // Check if the user is currently within any onboarding step
-    const currentSegments = segmentsKey ? segmentsKey.split("/") : [];
-    const inOnboarding = currentSegments.some(
-      (s) => s.startsWith("step-") || s === "(onboarding)",
-    );
-
-    if (!hasCompletedOnboarding && !inOnboarding && !onSplash) {
-      router.replace("/(onboarding)/step-name");
-    } else if (hasCompletedOnboarding && (inOnboarding || onSplash)) {
-      router.replace("/");
+    if (target) {
+      router.replace(target);
     }
-  }, [
-    isHydrated,
-    isSplashActive,
-    hasCompletedOnboarding,
-    onSplash,
-    router,
-    segmentsKey,
-  ]);
+  }, [isHydrated, isSplashActive, hasCompletedOnboarding, router, segmentsKey]);
 
   return (
     <View className="flex-1 bg-black" onLayout={onLayoutRootView}>
