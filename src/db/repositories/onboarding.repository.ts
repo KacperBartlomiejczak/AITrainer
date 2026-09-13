@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import type { ZodError } from "zod";
 import { getSelectedMuscleGroups } from "@/lib/muscle-focus";
 import {
   LOCAL_USER_ID,
@@ -30,6 +31,11 @@ export interface OnboardingRepositoryOptions {
   now?: () => Date;
 }
 
+/** Path + code per issue, safe to log — never the underlying user data. */
+function summarizeIssues(error: ZodError): { path: string; code: string }[] {
+  return error.issues.map((issue) => ({ path: issue.path.join("."), code: issue.code }));
+}
+
 /** Muscle groups deduplicated and ordered like `MuscleGroupSchema` for stable reads/writes. */
 function toCanonicalMuscleGroups(groups: readonly MuscleGroup[]): MuscleGroup[] {
   return MuscleGroupSchema.options.filter((group) => groups.includes(group));
@@ -55,8 +61,8 @@ export function createOnboardingRepository(
       const muscleGroups = UserFocusMuscleGroupRowListSchema.safeParse(rawMuscleGroups);
       if (!profile.success || !muscleGroups.success) {
         console.warn("[db] Stored onboarding rows failed validation", {
-          raw: rawProfile,
-          rawMuscleGroups,
+          profileIssues: profile.success ? [] : summarizeIssues(profile.error),
+          muscleGroupIssues: muscleGroups.success ? [] : summarizeIssues(muscleGroups.error),
         });
         return null;
       }
@@ -77,8 +83,7 @@ export function createOnboardingRepository(
       });
       if (!onboarding.success) {
         console.warn("[db] Stored onboarding is incomplete", {
-          raw: rawProfile,
-          rawMuscleGroups,
+          issues: summarizeIssues(onboarding.error),
         });
         return null;
       }
