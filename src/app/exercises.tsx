@@ -94,6 +94,10 @@ export default function ExercisesScreen() {
         {/* View mode toggle */}
         <View className="flex-row bg-[#121214] border border-[#27272A] rounded-full p-0.5">
           <Pressable
+            testID="view-mode-grid-button"
+            accessibilityRole="button"
+            accessibilityLabel="Widok siatki"
+            accessibilityState={{ selected: viewMode === "grid" }}
             onPress={() => setViewMode("grid")}
             className={cn(
               "w-9 h-9 rounded-full items-center justify-center",
@@ -103,6 +107,10 @@ export default function ExercisesScreen() {
             <Grid2x2 size={15} color={viewMode === "grid" ? "#FFF" : "#71717A"} />
           </Pressable>
           <Pressable
+            testID="view-mode-list-button"
+            accessibilityRole="button"
+            accessibilityLabel="Widok listy"
+            accessibilityState={{ selected: viewMode === "list" }}
             onPress={() => setViewMode("list")}
             className={cn(
               "w-9 h-9 rounded-full items-center justify-center",
