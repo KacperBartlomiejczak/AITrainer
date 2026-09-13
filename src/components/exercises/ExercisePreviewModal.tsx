@@ -5,12 +5,16 @@ import { getExerciseMedia } from "@/lib/exercise-assets";
 import type { CatalogExercise } from "@/schemas/exercise-catalog.schema";
 import { ExerciseMediaPreview } from "./ExerciseMediaPreview";
 import { ExercisePreviewMuscles } from "./ExercisePreviewMuscles";
+import { ExercisePreviewFooter } from "./ExercisePreviewFooter";
 import { ExercisePreviewSteps } from "./ExercisePreviewSteps";
 
 interface ExercisePreviewModalProps {
   exercise: CatalogExercise | null;
   visible: boolean;
   onClose: () => void;
+  /** Optional primary action instead of "Zamknij podgląd" (e.g. "Dodaj do treningu") */
+  actionLabel?: string;
+  onAction?: (exercise: CatalogExercise) => void;
 }
 
 function getExerciseSteps(exercise: CatalogExercise): string[] {
@@ -27,6 +31,8 @@ export function ExercisePreviewModal({
   exercise,
   visible,
   onClose,
+  actionLabel,
+  onAction,
 }: ExercisePreviewModalProps) {
   if (!exercise) return null;
   const media = getExerciseMedia(exercise.id);
@@ -80,15 +86,11 @@ export function ExercisePreviewModal({
             <ExercisePreviewSteps steps={getExerciseSteps(exercise)} />
           </ScrollView>
 
-          {/* CTA */}
-          <View className="px-5 pb-6 pt-2 border-t border-[#27272A]">
-            <Pressable
-              onPress={onClose}
-              className="w-full bg-[#007AFF] py-3.5 rounded-xl items-center active:bg-[#0062CC]"
-            >
-              <Text className="text-sm font-bold text-white">Zamknij podgląd</Text>
-            </Pressable>
-          </View>
+          <ExercisePreviewFooter
+            actionLabel={actionLabel}
+            onAction={onAction ? () => onAction(exercise) : undefined}
+            onClose={onClose}
+          />
         </View>
       </View>
     </Modal>

@@ -1,7 +1,11 @@
 import { toWorkoutSessionExport } from "@/lib/workout-history-mappers";
 import { attachWorkoutPhoto, clearWorkoutHistory, removeWorkoutPhoto } from "@/lib/workout-photo-service";
 import { workoutPhotoStorage } from "@/lib/workout-photo-storage";
+import type { ExerciseProgress } from "@/schemas/exercise-progress.schema";
+import type { PersonalBest } from "@/schemas/live-workout.schema";
 import type {
+  CatalogExerciseId,
+  NewUserRoutine,
   NewWorkoutSession,
   Routine,
   WorkoutHistoryEntry,
@@ -30,6 +34,58 @@ export async function loadWorkoutHistory(): Promise<WorkoutHistoryEntry[]> {
 
 export async function saveWorkoutSession(session: NewWorkoutSession): Promise<WorkoutSession> {
   return (await openWorkoutSessionRepository()).save(session);
+}
+
+export async function loadPersonalBests(catalogExerciseIds: readonly CatalogExerciseId[]): Promise<PersonalBest[]> {
+  return (await openWorkoutSessionRepository()).getPersonalBests(catalogExerciseIds);
+}
+
+export async function loadExerciseProgress(catalogExerciseId: CatalogExerciseId): Promise<ExerciseProgress> {
+  return (await openWorkoutSessionRepository()).getExerciseProgress(catalogExerciseId);
+}
+
+export interface SaveLiveWorkoutInput {
+  session: NewWorkoutSession;
+  /** null = the user did not ask to save the workout as a routine */
+  routine: NewUserRoutine | null;
+  /** Temporary picker URI; null = no photo */
+  photoUri: string | null;
+}
+
+export interface SaveLiveWorkoutResult {
+  session: WorkoutSession;
+  routineSaved: boolean;
+  photoSaved: boolean;
+}
+
+/**
+ * Saves a finished empty workout. The workout itself must succeed (rejects otherwise);
+ * the optional routine and photo are best effort, so a failing extra never loses the training data.
+ */
+export async function saveLiveWorkout({ session, routine, photoUri }: SaveLiveWorkoutInput): Promise<SaveLiveWorkoutResult> {
+  const saved = await saveWorkoutSession(session);
+
+  let routineSaved = false;
+  if (routine) {
+    try {
+      await (await openRoutineRepository()).create(routine);
+      routineSaved = true;
+    } catch (error: unknown) {
+      console.error("[db] Failed to save the workout as a routine", error);
+    }
+  }
+
+  let photoSaved = false;
+  if (photoUri) {
+    try {
+      await attachPhotoToWorkout(saved.id, photoUri);
+      photoSaved = true;
+    } catch (error: unknown) {
+      console.error("[photos] Failed to attach the photo to the saved workout", error);
+    }
+  }
+
+  return { session: saved, routineSaved, photoSaved };
 }
 
 export async function attachPhotoToWorkout(sessionId: WorkoutSessionId, sourceUri: string): Promise<void> {

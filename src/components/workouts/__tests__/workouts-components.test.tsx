@@ -3,6 +3,7 @@ import { render, fireEvent, act } from "@testing-library/react-native";
 import { ExercisesHeroBanner } from "../ExercisesHeroBanner";
 import { RoutineCard } from "../RoutineCard";
 import { RoutineListSection } from "../RoutineListSection";
+import { WorkoutQuickActions } from "../WorkoutQuickActions";
 import type { RoutineItem } from "@/schemas/routine.schema";
 
 const MOCK_ROUTINE: RoutineItem = {
@@ -74,6 +75,32 @@ describe("Workouts Components", () => {
     expect(getByText("Push Trening")).toBeTruthy();
     expect(getByTestId("start-routine-rtn_test_2")).toBeTruthy();
 
+    unmount();
+  });
+});
+
+describe("WorkoutQuickActions", () => {
+  it("starts an empty workout and shows 'create routine' without any action yet", async () => {
+    const onStartEmptyWorkout = jest.fn();
+    const { getByTestId, getByText, unmount } = await render(
+      <WorkoutQuickActions hasActiveWorkout={false} onStartEmptyWorkout={onStartEmptyWorkout} />,
+    );
+
+    expect(getByText("Rozpocznij pusty trening")).toBeTruthy();
+    expect(getByText("Stwórz nową rutynę")).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(getByTestId("start-empty-workout-button"));
+      fireEvent.press(getByTestId("create-routine-button"));
+    });
+    expect(onStartEmptyWorkout).toHaveBeenCalledTimes(1);
+    unmount();
+  });
+
+  it("offers to resume a running empty workout", async () => {
+    const { getByText, unmount } = await render(
+      <WorkoutQuickActions hasActiveWorkout onStartEmptyWorkout={jest.fn()} />,
+    );
+    expect(getByText("Wróć do treningu")).toBeTruthy();
     unmount();
   });
 });

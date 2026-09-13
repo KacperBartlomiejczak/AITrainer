@@ -5,12 +5,14 @@ import { useRoutines } from "@/hooks/use-routines";
 import {
   ExercisesHeroBanner,
   RoutineListSection,
+  WorkoutQuickActions,
 } from "@/components/workouts";
 import { PillNavbar } from "@/components/navigation";
 
 export default function WorkoutsScreen() {
   const insets = useSafeAreaInsets();
-  const { filteredRoutines, startRoutine, openAllExercises } = useRoutines();
+  const { filteredRoutines, startRoutine, hasActiveEmptyWorkout, startEmptyWorkout, openAllExercises } =
+    useRoutines();
 
   return (
     <View className="flex-1 bg-black">
@@ -32,6 +34,11 @@ export default function WorkoutsScreen() {
               Eksploruj gotowe plany lub przeglądaj pełną bazę ćwiczeń
             </Text>
           </View>
+
+          <WorkoutQuickActions
+            hasActiveWorkout={hasActiveEmptyWorkout}
+            onStartEmptyWorkout={startEmptyWorkout}
+          />
 
           {/* Hero Banner with "Pokaż wszystkie ćwiczenia" button */}
           <ExercisesHeroBanner onPressShowAll={openAllExercises} />

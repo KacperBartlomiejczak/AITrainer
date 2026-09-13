@@ -3,7 +3,7 @@ import { createRoutineRepository } from "../repositories/routine.repository";
 import { createWorkoutSessionRepository } from "../repositories/workout-session.repository";
 import { BUILTIN_ROUTINES } from "../seeds/builtin-routines";
 import { createTestDatabase, type TestDatabase } from "../testing/create-test-database";
-import type { NewWorkoutSession } from "@/schemas/workout-history.schema";
+import type { NewWorkoutSession, SetTag } from "@/schemas/workout-history.schema";
 
 const ROUTINE_ID = BUILTIN_ROUTINES[0]?.id ?? "";
 
@@ -141,6 +141,158 @@ describe("createWorkoutSessionRepository", () => {
     await createOnboardingRepository(testDb.db).clear();
 
     await expect(repository.list()).resolves.toEqual([]);
+  });
+
+  it("saves logged sets in order with tags and PR flags, and lists them back", async () => {
+    const repository = createRepository();
+    const saved = await repository.save(
+      buildSession({
+        routineId: null,
+        exercises: [
+          {
+            name: "Wyciskanie sztangi",
+            targetMuscle: "Klatka piersiowa",
+            sets: 2,
+            targetReps: "5–10",
+            completed: true,
+            catalogExerciseId: "0025",
+            loggedSets: [
+              { weightKg: 40, reps: 10, tag: "warmup", isOneRepMaxRecord: false, isBestSetVolumeRecord: false, isMaxRepsRecord: false },
+              { weightKg: 82.5, reps: 5, tag: null, isOneRepMaxRecord: true, isBestSetVolumeRecord: true, isMaxRepsRecord: false },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const [listed] = await repository.list();
+    expect(listed).toEqual(saved);
+    expect(listed?.exercises[0]?.catalogExerciseId).toBe("0025");
+    expect(
+      listed?.exercises[0]?.loggedSets.map((set) => [
+        set.weightKg,
+        set.reps,
+        set.tag,
+        set.isOneRepMaxRecord,
+        set.isBestSetVolumeRecord,
+        set.isMaxRepsRecord,
+      ]),
+    ).toEqual([
+      [40, 10, "warmup", false, false, false],
+      [82.5, 5, null, true, true, false],
+    ]);
+  });
+
+  it("lists routine workouts (no logged sets) with an empty set list", async () => {
+    const repository = createRepository();
+    await repository.save(buildSession());
+
+    const [session] = await repository.list();
+    expect(session?.exercises.map((exercise) => [exercise.catalogExerciseId, exercise.loggedSets])).toEqual([
+      [null, []],
+      [null, []],
+    ]);
+  });
+
+  it("returns 1RM, best set volume and most reps per catalog exercise, ignoring warm-ups and failed sets", async () => {
+    const repository = createRepository();
+    const noRecords = { isOneRepMaxRecord: false, isBestSetVolumeRecord: false, isMaxRepsRecord: false };
+    const exercise = (catalogExerciseId: string, sets: { weightKg: number; reps: number; tag: SetTag | null }[]) => ({
+      name: `Ćwiczenie ${catalogExerciseId}`,
+      targetMuscle: "Klatka",
+      sets: sets.length,
+      targetReps: "5",
+      completed: true,
+      catalogExerciseId,
+      loggedSets: sets.map((set) => ({ ...set, ...noRecords })),
+    });
+    await repository.save(
+      buildSession({
+        exercises: [
+          exercise("0025", [
+            { weightKg: 120, reps: 1, tag: "failed" },
+            { weightKg: 150, reps: 3, tag: "warmup" },
+            { weightKg: 90, reps: 1, tag: null },
+          ]),
+          exercise("0033", [
+            { weightKg: 0, reps: 25, tag: null },
+            { weightKg: 0, reps: 40, tag: "warmup" },
+          ]),
+          exercise("0045", [{ weightKg: 100, reps: 5, tag: "warmup" }]),
+        ],
+      }),
+    );
+    await repository.save(buildSession({ exercises: [exercise("0025", [{ weightKg: 70, reps: 10, tag: "drop_set" }])] }));
+
+    await expect(repository.getPersonalBests(["0025", "0033", "0045", "9999"])).resolves.toEqual([
+      // 1RM: 70 × 10 ≈ 93.33 kg beats 90 × 1; best set: 70 × 10 = 700 kg
+      { catalogExerciseId: "0025", oneRepMaxKg: 93.33, bestSetVolumeKg: 700, maxReps: null },
+      { catalogExerciseId: "0033", oneRepMaxKg: null, bestSetVolumeKg: null, maxReps: 25 },
+    ]);
+    await expect(repository.getPersonalBests([])).resolves.toEqual([]);
+  });
+
+  it("returns no bests for a user without any workouts", async () => {
+    await expect(createRepository().getPersonalBests(["0025"])).resolves.toEqual([]);
+  });
+
+  it("returns exercise progress per saved workout for the user, oldest first", async () => {
+    const repository = createRepository();
+    const noRecords = { isOneRepMaxRecord: false, isBestSetVolumeRecord: false, isMaxRepsRecord: false };
+    const benchPress = (sets: { weightKg: number; reps: number; tag: SetTag | null }[]) => ({
+      name: "Wyciskanie",
+      targetMuscle: "Klatka",
+      sets: sets.length,
+      targetReps: "5",
+      completed: true,
+      catalogExerciseId: "0025",
+      loggedSets: sets.map((set) => ({ ...set, ...noRecords })),
+    });
+    await repository.save(
+      buildSession({
+        startedAt: new Date("2026-09-12T17:00:00.000Z"),
+        completedAt: new Date("2026-09-12T18:00:00.000Z"),
+        exercises: [benchPress([{ weightKg: 85, reps: 3, tag: null }])],
+      }),
+    );
+    await repository.save(
+      buildSession({
+        startedAt: new Date("2026-09-10T17:00:00.000Z"),
+        completedAt: new Date("2026-09-10T18:00:00.000Z"),
+        exercises: [benchPress([{ weightKg: 40, reps: 10, tag: "warmup" }, { weightKg: 80, reps: 5, tag: null }])],
+      }),
+    );
+
+    const progress = await repository.getExerciseProgress("0025");
+    expect(progress.points.map((point) => [point.completedAt.toISOString(), point.oneRepMaxKg])).toEqual([
+      ["2026-09-10T18:00:00.000Z", 93.33],
+      ["2026-09-12T18:00:00.000Z", 93.5],
+    ]);
+    expect(progress.summary).toMatchObject({ heaviestSet: { weightKg: 85, reps: 3 }, workoutCount: 2 });
+    await expect(repository.getExerciseProgress("9999")).resolves.toMatchObject({ points: [], summary: { workoutCount: 0 } });
+  });
+
+  it("deletes logged sets together with the history", async () => {
+    const repository = createRepository();
+    await repository.save(
+      buildSession({
+        exercises: [
+          {
+            name: "Przysiad",
+            targetMuscle: "Nogi",
+            sets: 1,
+            targetReps: "5",
+            completed: true,
+            catalogExerciseId: "0043",
+            loggedSets: [{ weightKg: 100, reps: 5, tag: null, isOneRepMaxRecord: false, isBestSetVolumeRecord: false, isMaxRepsRecord: false }],
+          },
+        ],
+      }),
+    );
+    await repository.clearAll();
+
+    expect(testDb.sqlite.prepare("SELECT COUNT(*) AS count FROM workout_session_sets").get()).toEqual({ count: 0 });
+    await expect(repository.getPersonalBests(["0043"])).resolves.toEqual([]);
   });
 
   it("skips a corrupted session row instead of crashing", async () => {

@@ -6,6 +6,7 @@ import { MonthlyIntensityChart } from "../MonthlyIntensityChart";
 import { UserRoutinesList } from "../UserRoutinesList";
 import { RecentCompletedWorkouts } from "../RecentCompletedWorkouts";
 import { PastWorkoutModal } from "../PastWorkoutModal";
+import { WorkoutExercisesSlide } from "../WorkoutExercisesSlide";
 import { STRENGTH_LEAGUES } from "@/schemas/user-profile-screen.schema";
 
 describe("User Profile UI Components", () => {
@@ -336,5 +337,30 @@ describe("User Profile UI Components", () => {
 
       unmount();
     });
+  });
+});
+
+describe("WorkoutExercisesSlide record notes", () => {
+  it("describes the records beaten in a logged workout", async () => {
+    const { getByText, unmount } = await render(
+      <WorkoutExercisesSlide
+        workoutId="wks_9"
+        hasAchievementsSlide={false}
+        exercises={[
+          {
+            id: "wse_9",
+            name: "Wyciskanie sztangi",
+            setsSummary: "3 serie • maks. 82,5 kg × 5",
+            completed: true,
+            isPersonalRecord: true,
+            recordNote: "Max ≈ 96,5 kg • Rekordowa seria: 560 kg",
+          },
+        ]}
+      />,
+    );
+
+    expect(getByText("PR 🔥")).toBeTruthy();
+    expect(getByText("Max ≈ 96,5 kg • Rekordowa seria: 560 kg")).toBeTruthy();
+    unmount();
   });
 });

@@ -3,11 +3,14 @@ import {
   NewWorkoutSessionSchema,
   PickedImageResultSchema,
   PickWorkoutPhotoResultSchema,
+  PersonalRecordTypeSchema,
   RoutineRowSchema,
+  SetTagSchema,
   WorkoutPhotoFileNameSchema,
   WorkoutPhotoSourceSchema,
   WorkoutSessionExportSchema,
   WorkoutSessionRowSchema,
+  WorkoutSessionSetRowSchema,
   type NewWorkoutSession,
 } from "../workout-history.schema";
 import { LOCAL_USER_ID } from "../database.schema";
@@ -187,5 +190,66 @@ describe("WorkoutSessionExportSchema", () => {
     });
     expect(result.success).toBe(true);
     expect(result.data).not.toHaveProperty("photoFileName");
+  });
+});
+
+describe("WorkoutSessionSetRowSchema", () => {
+  const row = {
+    id: "wss_1",
+    sessionExerciseId: "wse_1",
+    position: 0,
+    weightKg: 62.5,
+    reps: 8,
+    tag: null,
+    isOneRepMaxRecord: false,
+    isBestSetVolumeRecord: false,
+    isMaxRepsRecord: false,
+  };
+
+  it("accepts a regular set and every set tag", () => {
+    expect(WorkoutSessionSetRowSchema.safeParse(row).success).toBe(true);
+    for (const tag of SetTagSchema.options) {
+      expect(WorkoutSessionSetRowSchema.safeParse({ ...row, tag }).success).toBe(true);
+    }
+  });
+
+  it("requires all three record flags (no legacy isPersonalRecord)", () => {
+    expect(WorkoutSessionSetRowSchema.safeParse({ ...row, isMaxRepsRecord: undefined }).success).toBe(false);
+    expect(PersonalRecordTypeSchema.options).toEqual(["one_rep_max", "best_set_volume", "max_reps"]);
+  });
+
+  it.each([{ weightKg: -1 }, { reps: 0 }, { tag: "pr" }, { position: -1 }])("rejects %p", (override) => {
+    expect(WorkoutSessionSetRowSchema.safeParse({ ...row, ...override }).success).toBe(false);
+  });
+});
+
+describe("NewWorkoutSessionSchema with logged sets", () => {
+  const loggedSet = {
+    weightKg: 80,
+    reps: 5,
+    tag: null,
+    isOneRepMaxRecord: true,
+    isBestSetVolumeRecord: true,
+    isMaxRepsRecord: false,
+  };
+
+  it("accepts logged sets and a catalog exercise id on a completed exercise", () => {
+    const result = NewWorkoutSessionSchema.safeParse({
+      ...validNewSession,
+      routineId: null,
+      exercises: [{ ...validNewSession.exercises[0], catalogExerciseId: "0025", loggedSets: [loggedSet] }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects logged sets on an exercise that is not completed", () => {
+    const result = NewWorkoutSessionSchema.safeParse({
+      ...validNewSession,
+      exercises: [
+        validNewSession.exercises[0],
+        { ...validNewSession.exercises[1], loggedSets: [loggedSet] },
+      ],
+    });
+    expect(result.success).toBe(false);
   });
 });

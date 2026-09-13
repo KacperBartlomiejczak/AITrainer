@@ -100,3 +100,97 @@ describe("drizzle migration 0002 (routines & workout sessions)", () => {
     }
   });
 });
+
+describe("drizzle migration 0003 (workout session sets)", () => {
+  it("keeps saved workouts (without a catalog id) and adds the sets table", () => {
+    const sqlite = new Database(":memory:");
+    sqlite.pragma("foreign_keys = ON");
+    const db = drizzle(sqlite);
+    const previousFolder = createPartialMigrationsFolder(3);
+
+    try {
+      migrate(db, { migrationsFolder: previousFolder });
+      sqlite
+        .prepare(
+          "INSERT INTO user_profiles VALUES ('local', 'Kacper', 'beginner', 'strength', 'undecided', 1, 1, 1)",
+        )
+        .run();
+      sqlite
+        .prepare("INSERT INTO workout_sessions VALUES ('wks_1', 'local', NULL, 'FBW', 1, 2, 1, NULL, 2)")
+        .run();
+      sqlite
+        .prepare("INSERT INTO workout_session_exercises VALUES ('wse_1', 'wks_1', 0, 'Przysiad', 'Nogi', 3, '8', 1)")
+        .run();
+
+      migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+
+      expect(
+        sqlite.prepare("SELECT id, catalog_exercise_id FROM workout_session_exercises").all(),
+      ).toEqual([{ id: "wse_1", catalog_exercise_id: null }]);
+
+      sqlite
+        .prepare(
+          "INSERT INTO workout_session_sets (id, session_exercise_id, position, weight_kg, reps, tag) VALUES ('wss_1', 'wse_1', 0, 62.5, 8, 'warmup')",
+        )
+        .run();
+      sqlite.prepare("DELETE FROM workout_sessions WHERE id = 'wks_1'").run();
+      // Sets are removed together with their workout (data deletion on request)
+      expect(sqlite.prepare("SELECT COUNT(*) AS count FROM workout_session_sets").get()).toEqual({ count: 0 });
+    } finally {
+      sqlite.close();
+      fs.rmSync(previousFolder, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("drizzle migration 0004 (personal record types)", () => {
+  it("keeps logged sets, maps the old PR flag to the 1RM record and drops the legacy column", () => {
+    const sqlite = new Database(":memory:");
+    sqlite.pragma("foreign_keys = ON");
+    const db = drizzle(sqlite);
+    const previousFolder = createPartialMigrationsFolder(4);
+
+    try {
+      migrate(db, { migrationsFolder: previousFolder });
+      sqlite
+        .prepare("INSERT INTO user_profiles VALUES ('local', 'Kacper', 'beginner', 'strength', 'undecided', 1, 1, 1)")
+        .run();
+      sqlite.prepare("INSERT INTO workout_sessions VALUES ('wks_1', 'local', NULL, 'Push', 1, 2, 1, NULL, 2)").run();
+      sqlite
+        .prepare(
+          "INSERT INTO workout_session_exercises (id, session_id, position, name, target_muscle, sets, target_reps, completed, catalog_exercise_id) VALUES ('wse_1', 'wks_1', 0, 'Wyciskanie', 'Klatka', 2, '5', 1, '0025')",
+        )
+        .run();
+      sqlite
+        .prepare(
+          "INSERT INTO workout_session_sets (id, session_exercise_id, position, weight_kg, reps, tag, is_personal_record) VALUES ('wss_1', 'wse_1', 0, 60, 10, NULL, 0), ('wss_2', 'wse_1', 1, 80, 5, NULL, 1)",
+        )
+        .run();
+
+      migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+
+      expect(
+        sqlite
+          .prepare(
+            "SELECT id, is_one_rep_max_record, is_best_set_volume_record, is_max_reps_record FROM workout_session_sets ORDER BY position",
+          )
+          .all(),
+      ).toEqual([
+        { id: "wss_1", is_one_rep_max_record: 0, is_best_set_volume_record: 0, is_max_reps_record: 0 },
+        { id: "wss_2", is_one_rep_max_record: 1, is_best_set_volume_record: 0, is_max_reps_record: 0 },
+      ]);
+      const columns = sqlite
+        .prepare("PRAGMA table_info(workout_session_sets)")
+        .all()
+        .map((column) => (column as { name: string }).name);
+      expect(columns).not.toContain("is_personal_record");
+
+      // Sets still belong to their workout (cascade delete keeps working)
+      sqlite.prepare("DELETE FROM workout_sessions WHERE id = 'wks_1'").run();
+      expect(sqlite.prepare("SELECT COUNT(*) AS count FROM workout_session_sets").get()).toEqual({ count: 0 });
+    } finally {
+      sqlite.close();
+      fs.rmSync(previousFolder, { recursive: true, force: true });
+    }
+  });
+});
