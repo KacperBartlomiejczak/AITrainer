@@ -28,7 +28,7 @@ export const MOCK_FRIENDS_FEED: readonly FriendWorkoutFeedItem[] = [
     completedAtLabel: "Dziś, 07:10",
     durationMinutes: 62,
     exerciseCount: 6,
-    photoAssetKey: "0007",
+    photoAssetKey: "0198",
     highlight: null,
     likesCount: 8,
     commentsCount: 1,
