@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   LiveWorkoutExerciseList,
@@ -33,37 +33,43 @@ export default function WorkoutSessionScreen() {
     <View className="flex-1 bg-black" style={{ paddingTop: Math.max(insets.top, 16) }}>
       <LiveWorkoutHeader onBack={workout.goBack} onDiscard={workout.confirmDiscard} onFinish={finish.openSummary} />
 
-      <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: Math.max(insets.bottom, 24) + 32, gap: 14 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        testID="workout-session-keyboard-avoiding"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
       >
-        <LiveWorkoutStatsBar
-          elapsedSeconds={workout.elapsedSeconds}
-          completedSetCount={workout.stats.completedSetCount}
-          totalVolumeKg={workout.stats.totalVolumeKg}
-        />
-        <WorkoutMuscleMap trainedMuscles={workout.stats.trainedMuscles} />
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingBottom: Math.max(insets.bottom, 24) + 32, gap: 14 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <LiveWorkoutStatsBar
+            elapsedSeconds={workout.elapsedSeconds}
+            completedSetCount={workout.stats.completedSetCount}
+            totalVolumeKg={workout.stats.totalVolumeKg}
+          />
+          <WorkoutMuscleMap trainedMuscles={workout.stats.trainedMuscles} />
 
-        {finish.errorMessage && !finish.isSummaryOpen ? (
-          <Text accessibilityRole="alert" className="text-sm font-semibold text-center text-[#F87171]">
-            {finish.errorMessage}
-          </Text>
-        ) : null}
+          {finish.errorMessage && !finish.isSummaryOpen ? (
+            <Text accessibilityRole="alert" className="text-sm font-semibold text-center text-[#F87171]">
+              {finish.errorMessage}
+            </Text>
+          ) : null}
 
-        <LiveWorkoutExerciseList
-          exercises={workout.exercises}
-          personalRecordHits={workout.personalRecordHits}
-          onUpdateSet={workout.updateSet}
-          onToggleSet={workout.toggleSetCompleted}
-          onPressSetLabel={workout.openTagDialog}
-          onAddSet={workout.addSet}
-          onRemoveExercise={workout.removeExercise}
-          onShowExercise={preview.openPreview}
-          onShowProgress={progress.open}
-          onAddExercise={picker.open}
-        />
-      </ScrollView>
+          <LiveWorkoutExerciseList
+            exercises={workout.exercises}
+            personalRecordHits={workout.personalRecordHits}
+            onUpdateSet={workout.updateSet}
+            onToggleSet={workout.toggleSetCompleted}
+            onPressSetLabel={workout.openTagDialog}
+            onAddSet={workout.addSet}
+            onRemoveExercise={workout.removeExercise}
+            onShowExercise={preview.openPreview}
+            onShowProgress={progress.open}
+            onAddExercise={picker.open}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <LiveWorkoutOverlays
         workout={workout}

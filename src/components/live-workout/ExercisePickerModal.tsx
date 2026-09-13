@@ -1,5 +1,5 @@
 import React from "react";
-import { FlatList, Modal, Pressable, Text, View } from "react-native";
+import { FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, Text, View } from "react-native";
 import { X } from "lucide-react-native";
 import { ExercisePreviewModal } from "@/components/exercises/ExercisePreviewModal";
 import type { CatalogExercise } from "@/schemas/exercise-catalog.schema";
@@ -37,7 +37,11 @@ export function ExercisePickerModal(props: ExercisePickerModalProps) {
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose} testID="exercise-picker">
-      <View className="flex-1 bg-black px-4 pt-5 gap-3">
+      <KeyboardAvoidingView
+        testID="exercise-picker-keyboard-avoiding"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1 bg-black px-4 pt-5 gap-3"
+      >
         <View className="flex-row items-center justify-between">
           <Text className="text-lg font-black text-white">Dodaj ćwiczenie</Text>
           <Pressable
@@ -69,7 +73,7 @@ export function ExercisePickerModal(props: ExercisePickerModalProps) {
             <ExercisePickerEmpty hasActiveFilters={props.hasActiveFilters} onResetFilters={props.onResetFilters} />
           }
         />
-      </View>
+      </KeyboardAvoidingView>
 
       {/* Rendered inside the picker's modal so they can stack on top of it (iOS) */}
       <ExercisePickerFilterSheet

@@ -91,6 +91,13 @@ describe("WorkoutSessionScreen", () => {
     unmount();
   });
 
+  it("wraps the exercise list in a keyboard-avoiding container", async () => {
+    const { unmount } = await render(<WorkoutSessionScreen />);
+
+    expect(screen.getByTestId("workout-session-keyboard-avoiding")).toBeTruthy();
+    unmount();
+  });
+
   it("logs a set, tags a warm-up, finishes and saves the workout to the database", async () => {
     const router = useRouter();
     const { unmount } = await render(<WorkoutSessionScreen />);

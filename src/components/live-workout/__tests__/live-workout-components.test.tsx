@@ -287,6 +287,13 @@ describe("ExercisePickerModal", () => {
     await act(async () => fireEvent.press(screen.getByTestId("exercise-picker-reset-filters")));
     expect(props.onResetFilters).toHaveBeenCalled();
   });
+
+  it("wraps the search input in a keyboard-avoiding container", async () => {
+    await renderPicker();
+
+    expect(screen.getByTestId("exercise-picker-keyboard-avoiding")).toBeTruthy();
+    expect(screen.getByTestId("exercise-picker-search")).toBeTruthy();
+  });
 });
 
 describe("FilterChipRow", () => {
@@ -389,6 +396,13 @@ describe("FinishWorkoutSection", () => {
 
     expect(screen.getByTestId("finish-workout-save").props.accessibilityState).toMatchObject({ disabled: true });
     expect(screen.getByText("Nie udało się zapisać treningu. Spróbuj ponownie.")).toBeTruthy();
+  });
+
+  it("wraps the workout title input in a keyboard-avoiding container", async () => {
+    await renderSection();
+
+    expect(screen.getByTestId("finish-workout-keyboard-avoiding")).toBeTruthy();
+    expect(screen.getByTestId("finish-workout-title")).toBeTruthy();
   });
 });
 
