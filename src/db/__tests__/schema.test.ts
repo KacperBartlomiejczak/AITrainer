@@ -4,6 +4,7 @@ import {
   userFocusMuscleGroups,
   userProfiles,
   workoutSessionExercises,
+  workoutSessionSets,
   workoutSessions,
 } from "../schema";
 import { RoutineLevelSchema } from "@/schemas/routine.schema";
@@ -12,7 +13,9 @@ import type {
   RoutineRow,
   WorkoutSessionExerciseRow,
   WorkoutSessionRow,
+  WorkoutSessionSetRow,
 } from "@/schemas/workout-history.schema";
+import { SetTagSchema } from "@/schemas/workout-history.schema";
 import {
   FitnessGoalSchema,
   MuscleGroupSchema,
@@ -41,6 +44,7 @@ const sessionExerciseRowParity: Equals<
   typeof workoutSessionExercises.$inferSelect,
   WorkoutSessionExerciseRow
 > = true;
+const sessionSetRowParity: Equals<typeof workoutSessionSets.$inferSelect, WorkoutSessionSetRow> = true;
 
 describe("drizzle schema ↔ zod parity", () => {
   it("keeps routine and workout history row types identical to Zod row types", () => {
@@ -48,6 +52,11 @@ describe("drizzle schema ↔ zod parity", () => {
     expect(routineExerciseRowParity).toBe(true);
     expect(sessionRowParity).toBe(true);
     expect(sessionExerciseRowParity).toBe(true);
+    expect(sessionSetRowParity).toBe(true);
+  });
+
+  it("derives set tag enum values from SetTagSchema", () => {
+    expect(workoutSessionSets.tag.enumValues).toEqual(SetTagSchema.options);
   });
 
   it("derives routine level enum values from RoutineLevelSchema", () => {

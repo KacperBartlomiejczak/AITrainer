@@ -2,14 +2,17 @@ import {
   attachPhotoToWorkout,
   deleteWorkoutHistory,
   exportWorkoutSessions,
+  loadExerciseProgress,
+  loadPersonalBests,
   loadRoutines,
   loadWorkoutHistory,
   removePhotoFromWorkout,
+  saveLiveWorkout,
   saveWorkoutSession,
 } from "../workout-history";
 import { resetInMemoryDatabase, saveLocalProfile } from "../testing/in-memory-client";
 import { FAKE_WORKOUT_PHOTOS_URI, getFakeFileSystem } from "@/lib/testing/fake-file-system";
-import type { NewWorkoutSession } from "@/schemas/workout-history.schema";
+import type { NewUserRoutine, NewWorkoutSession } from "@/schemas/workout-history.schema";
 
 jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
@@ -21,6 +24,36 @@ const finishedWorkout: NewWorkoutSession = {
   startedAt: new Date("2026-09-13T17:00:00.000Z"),
   completedAt: new Date("2026-09-13T17:45:00.000Z"),
   exercises: [{ name: "Przysiad ze sztangą", targetMuscle: "Nogi", sets: 3, targetReps: "8-10", completed: true }],
+};
+
+const loggedWorkout: NewWorkoutSession = {
+  routineId: null,
+  title: "Push day",
+  startedAt: new Date("2026-09-13T17:00:00.000Z"),
+  completedAt: new Date("2026-09-13T17:50:00.000Z"),
+  exercises: [
+    {
+      catalogExerciseId: "0025",
+      name: "Wyciskanie sztangi",
+      targetMuscle: "Klatka piersiowa",
+      sets: 1,
+      targetReps: "5",
+      completed: true,
+      loggedSets: [{ weightKg: 80, reps: 5, tag: null, isOneRepMaxRecord: false, isBestSetVolumeRecord: false, isMaxRepsRecord: false }],
+    },
+  ],
+};
+
+const routineFromWorkout: NewUserRoutine = {
+  id: "rtn_user_push",
+  title: "Push day",
+  description: "Rutyna zapisana z treningu 13.09.2026",
+  level: "beginner",
+  daysPerWeek: 1,
+  durationMinutes: 50,
+  exercises: [
+    { id: "rtx_1", name: "Wyciskanie sztangi", targetMuscle: "Klatka piersiowa", sets: 1, targetReps: "5", restSeconds: 90 },
+  ],
 };
 
 describe("workout history service", () => {
@@ -80,6 +113,53 @@ describe("workout history service", () => {
 
     const [entry] = await loadWorkoutHistory();
     expect(entry?.photoUri).toBeNull();
+  });
+
+  it("saves a logged workout with its routine and photo", async () => {
+    const result = await saveLiveWorkout({ session: loggedWorkout, routine: routineFromWorkout, photoUri: PICKED_URI });
+
+    expect(result).toMatchObject({ routineSaved: true, photoSaved: true });
+    const [entry] = await loadWorkoutHistory();
+    expect(entry?.id).toBe(result.session.id);
+    expect(entry?.photoUri).not.toBeNull();
+    expect(entry?.exercises[0]?.loggedSets).toHaveLength(1);
+    expect((await loadRoutines()).map((routine) => routine.id)).toContain("rtn_user_push");
+    await expect(loadExerciseProgress("0025")).resolves.toMatchObject({
+      points: [expect.objectContaining({ oneRepMaxKg: 93.33, bestSetVolumeKg: 400 })],
+      summary: { heaviestSet: { weightKg: 80, reps: 5 }, workoutCount: 1 },
+    });
+    await expect(loadPersonalBests(["0025"])).resolves.toEqual([
+      { catalogExerciseId: "0025", oneRepMaxKg: 93.33, bestSetVolumeKg: 400, maxReps: null },
+    ]);
+  });
+
+  it("keeps the saved workout when the photo cannot be stored", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const result = await saveLiveWorkout({
+      session: loggedWorkout,
+      routine: null,
+      photoUri: "file:///cache/ImagePicker/missing.jpg",
+    });
+
+    expect(result).toMatchObject({ routineSaved: false, photoSaved: false });
+    const [entry] = await loadWorkoutHistory();
+    expect(entry?.id).toBe(result.session.id);
+    expect(entry?.photoUri).toBeNull();
+    expect(console.error).toHaveBeenCalled();
+    jest.mocked(console.error).mockRestore();
+  });
+
+  it("rejects an invalid workout without saving the routine", async () => {
+    await expect(
+      saveLiveWorkout({
+        session: { ...loggedWorkout, exercises: [] },
+        routine: routineFromWorkout,
+        photoUri: null,
+      }),
+    ).rejects.toThrow();
+    expect((await loadRoutines()).map((routine) => routine.id)).not.toContain("rtn_user_push");
+    await expect(loadWorkoutHistory()).resolves.toEqual([]);
   });
 
   it("exports sessions without photo file paths", async () => {

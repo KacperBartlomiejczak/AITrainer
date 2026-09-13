@@ -31,6 +31,12 @@ describe("WorkoutsScreen", () => {
     });
     expect(router.push).toHaveBeenCalledWith("/exercises");
 
+    expect(screen.getByText("Stwórz nową rutynę")).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("start-empty-workout-button"));
+    });
+    expect(router.push).toHaveBeenCalledWith("/workout-session");
+
     unmount();
   });
 });

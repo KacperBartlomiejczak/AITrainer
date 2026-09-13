@@ -2,8 +2,10 @@ import React, { useMemo } from "react";
 import { View, Text, Pressable } from "react-native";
 import Body, { type ExtendedBodyPart } from "react-native-body-highlighter";
 import { RefreshCw } from "lucide-react-native";
+import { RANKING_MUSCLE_SLUGS } from "@/lib/body-highlighter-slugs";
 import {
   mapSlugToRankingMuscle,
+  RankingMuscleGroupSchema,
   type RankingMuscleGroup,
   type MuscleRankItem,
 } from "@/schemas/ranking.schema";
@@ -23,61 +25,21 @@ export function HumanBodyDiagram({
   onSelectMuscle,
   onToggleOrientation,
 }: HumanBodyDiagramProps) {
-  const getMuscleColor = (muscle: RankingMuscleGroup) => {
-    const item = muscleRanks.find((r) => r.muscle === muscle);
-    return item ? item.league.badgeColor : "#52525B";
-  };
-
   const isFront = orientation === "front";
-  const chestColor = getMuscleColor("chest");
-  const shouldersColor = getMuscleColor("shoulders");
-  const bicepsColor = getMuscleColor("biceps");
-  const tricepsColor = getMuscleColor("triceps");
-  const absColor = getMuscleColor("abs");
-  const legsColor = getMuscleColor("legs");
-  const backColor = getMuscleColor("back");
 
-  const bodyData = useMemo<ExtendedBodyPart[]>(() => {
-    const isSelected = (m: RankingMuscleGroup) => selectedMuscle === m;
-    const partStyle = (m: RankingMuscleGroup, color: string) => {
-      const selected = isSelected(m);
-      return {
-        fill: color,
-        stroke: selected ? "#FFFFFF" : "#121214",
-        strokeWidth: selected ? 2.5 : 1,
-      };
-    };
-
-    return [
-      // Front View Parts
-      { slug: "chest", styles: partStyle("chest", chestColor) },
-      { slug: "deltoids", styles: partStyle("shoulders", shouldersColor) },
-      { slug: "biceps", styles: partStyle("biceps", bicepsColor) },
-      { slug: "abs", styles: partStyle("abs", absColor) },
-      { slug: "obliques", styles: partStyle("abs", absColor) },
-      { slug: "quadriceps", styles: partStyle("legs", legsColor) },
-
-      // Back View Parts
-      { slug: "trapezius", styles: partStyle("back", backColor) },
-      { slug: "upper-back", styles: partStyle("back", backColor) },
-      { slug: "lower-back", styles: partStyle("back", backColor) },
-      { slug: "triceps", styles: partStyle("triceps", tricepsColor) },
-      { slug: "gluteal", styles: partStyle("legs", legsColor) },
-      { slug: "hamstring", styles: partStyle("legs", legsColor) },
-
-      // Shared Both Sides
-      { slug: "calves", styles: partStyle("legs", legsColor) },
-    ];
-  }, [
-    selectedMuscle,
-    chestColor,
-    shouldersColor,
-    bicepsColor,
-    tricepsColor,
-    absColor,
-    legsColor,
-    backColor,
-  ]);
+  const bodyData = useMemo<ExtendedBodyPart[]>(
+    () =>
+      RankingMuscleGroupSchema.options.flatMap((muscle) => {
+        const selected = selectedMuscle === muscle;
+        const styles = {
+          fill: muscleRanks.find((rank) => rank.muscle === muscle)?.league.badgeColor ?? "#52525B",
+          stroke: selected ? "#FFFFFF" : "#121214",
+          strokeWidth: selected ? 2.5 : 1,
+        };
+        return RANKING_MUSCLE_SLUGS[muscle].map((slug) => ({ slug, styles }));
+      }),
+    [selectedMuscle, muscleRanks],
+  );
 
   const handleBodyPartPress = (bodyPart: ExtendedBodyPart) => {
     if (!bodyPart.slug) return;

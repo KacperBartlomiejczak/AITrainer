@@ -2,6 +2,7 @@ import { renderHook, act, waitFor } from "@testing-library/react-native";
 import { useRoutines } from "../use-routines";
 import { useRouter } from "expo-router";
 import { resetInMemoryDatabase } from "@/db/testing/in-memory-client";
+import { useLiveWorkoutStore } from "@/stores/live-workout.store";
 
 jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
@@ -63,6 +64,25 @@ describe("useRoutines", () => {
 
     expect(router.push).toHaveBeenCalledWith("/exercises");
 
+    unmount();
+  });
+
+  it("opens the empty workout screen and knows when one is already running", async () => {
+    const router = useRouter();
+    useLiveWorkoutStore.getState().discardWorkout();
+    const { result, unmount } = await renderHook(() => useRoutines());
+    expect(result.current.hasActiveEmptyWorkout).toBe(false);
+
+    await act(async () => {
+      result.current.startEmptyWorkout();
+    });
+    expect(router.push).toHaveBeenCalledWith("/workout-session");
+
+    await act(async () => {
+      useLiveWorkoutStore.getState().startWorkout();
+    });
+    expect(result.current.hasActiveEmptyWorkout).toBe(true);
+    useLiveWorkoutStore.getState().discardWorkout();
     unmount();
   });
 });

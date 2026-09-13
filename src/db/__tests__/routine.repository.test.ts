@@ -1,7 +1,9 @@
+import { createOnboardingRepository } from "../repositories/onboarding.repository";
 import { createRoutineRepository } from "../repositories/routine.repository";
 import { BUILTIN_ROUTINES } from "../seeds/builtin-routines";
 import { createTestDatabase, type TestDatabase } from "../testing/create-test-database";
-import { NewRoutineSchema, type NewRoutine } from "@/schemas/workout-history.schema";
+import { LOCAL_USER_ID } from "@/schemas/database.schema";
+import { NewRoutineSchema, NewUserRoutineSchema, type NewRoutine } from "@/schemas/workout-history.schema";
 
 const customRoutine: NewRoutine = {
   id: "rtn_custom",
@@ -91,6 +93,34 @@ describe("createRoutineRepository", () => {
     const repository = createRoutineRepository(testDb.db, { now });
     await expect(repository.seed([{ ...customRoutine, daysPerWeek: 9 }])).rejects.toThrow();
     expect(await repository.list()).toEqual([]);
+  });
+
+  it("creates a routine owned by the repository user and lists it after built-in ones", async () => {
+    await createOnboardingRepository(testDb.db, { now }).save({
+      name: "Kacper",
+      experienceLevel: "beginner",
+      fitnessGoal: "strength",
+      muscleFocus: { mode: "undecided" },
+    });
+    const repository = createRoutineRepository(testDb.db, { now });
+    await repository.seed(BUILTIN_ROUTINES);
+
+    // Zod strips `userId`: the owner always comes from the repository
+    const definition = NewUserRoutineSchema.parse(customRoutine);
+    const created = await repository.create(definition);
+
+    expect(created).toMatchObject({ id: "rtn_custom", userId: LOCAL_USER_ID, createdAt: now() });
+    expect(created.exercises.map((exercise) => exercise.name)).toEqual(["Pompki", "Przysiad"]);
+    const routines = await repository.list();
+    expect(routines.map((routine) => routine.id)).toContain("rtn_custom");
+    await expect(repository.getById("rtn_custom")).resolves.toEqual(created);
+  });
+
+  it("rejects an invalid user routine without writing anything", async () => {
+    const repository = createRoutineRepository(testDb.db, { now });
+    const definition = NewUserRoutineSchema.parse(customRoutine);
+    await expect(repository.create({ ...definition, exercises: [] })).rejects.toThrow();
+    await expect(repository.list()).resolves.toEqual([]);
   });
 
   it("skips corrupted routine rows instead of crashing", async () => {
