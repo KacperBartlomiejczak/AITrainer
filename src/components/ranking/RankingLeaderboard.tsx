@@ -14,11 +14,13 @@ interface RankingLeaderboardProps {
 
 const FILTER_OPTIONS: { id: "all" | StrengthLeagueId; label: string }[] = [
   { id: "all", label: "Wszyscy 🌍" },
+  { id: "titan", label: "Tytan ⚡" },
   { id: "diamond", label: "Diament 💎" },
   { id: "master", label: "Mistrz 👑" },
   { id: "platinum", label: "Platyna 🛡️" },
   { id: "gold", label: "Złoto 🥇" },
   { id: "silver", label: "Srebro 🥈" },
+  { id: "bronze", label: "Brąz 🥉" },
 ];
 
 export function RankingLeaderboard({

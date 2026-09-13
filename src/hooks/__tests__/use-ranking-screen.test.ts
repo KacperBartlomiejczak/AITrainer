@@ -131,4 +131,35 @@ describe("useRankingScreen", () => {
 
     unmount();
   });
+
+  it("sorts leaderboard descending by totalScore and reassigns rank sequentially", async () => {
+    const { result, unmount } = await renderHook(() => useRankingScreen());
+
+    const scores = result.current.leaderboard.map((u) => u.totalScore);
+    for (let i = 0; i < scores.length - 1; i++) {
+      expect(scores[i]).toBeGreaterThanOrEqual(scores[i + 1]);
+    }
+
+    result.current.leaderboard.forEach((user, idx) => {
+      expect(user.rank).toBe(idx + 1);
+    });
+
+    unmount();
+  });
+
+  it("preserves chest summary in topRecordSummary when selecting a different muscle", async () => {
+    const { result, unmount } = await renderHook(() => useRankingScreen());
+
+    // Switch selected muscle to biceps
+    await act(async () => {
+      result.current.setSelectedMuscle("biceps");
+    });
+
+    const currentUser = result.current.leaderboard.find((u) => u.isCurrentUser);
+    expect(currentUser).toBeDefined();
+    // Chest is 100kg -> Diament
+    expect(currentUser?.topRecordSummary).toBe("100 kg (Diament)");
+
+    unmount();
+  });
 });

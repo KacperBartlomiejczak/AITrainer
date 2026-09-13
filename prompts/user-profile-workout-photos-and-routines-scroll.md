@@ -19,7 +19,7 @@
    - Poprzednio był to pionowy stos kart.
    - **Wymaganie**: Rutyny treningowe mają być kartami przewijanymi poziomo (`ScrollView horizontal`), z zachowaniem tytułów, partii mięśniowych, czasu i przycisku startu.
 3. **Zdjęcia na samej górze (`RoutinePhotoCarousel`)**:
-   - Zero zaokrągleń (`rounded-none`) dla surowej, nowoczesnej estetyki.
+   - Zaokrąglone karty portretowe (`rounded-2xl`) dla eleganckiej, nowoczesnej estetyki.
 
 ---
 
