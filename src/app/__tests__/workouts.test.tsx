@@ -1,25 +1,33 @@
 import React from "react";
-import { render, fireEvent, act } from "@testing-library/react-native";
+import { render, fireEvent, act, screen } from "@testing-library/react-native";
 import WorkoutsScreen from "../workouts";
 import { useRouter } from "expo-router";
+import { resetInMemoryDatabase } from "@/db/testing/in-memory-client";
+
+jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
 jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
 }));
 
 describe("WorkoutsScreen", () => {
-  it("renders workouts screen with routines and pill navbar", async () => {
+  afterEach(() => {
+    resetInMemoryDatabase();
+  });
+
+  it("renders workouts screen with routines from the database and pill navbar", async () => {
     const router = useRouter();
-    const { getByText, getByTestId, unmount } = await render(<WorkoutsScreen />);
+    const { unmount } = await render(<WorkoutsScreen />);
 
-    expect(getByText("Treningi & Rutyny 🏋️")).toBeTruthy();
-    expect(getByText("Baza Ćwiczeń & Atlas")).toBeTruthy();
-    expect(getByText("Gotowe Rutyny Treningowe")).toBeTruthy();
-    expect(getByTestId("pill-navbar")).toBeTruthy();
+    expect(screen.getByText("Treningi & Rutyny 🏋️")).toBeTruthy();
+    expect(screen.getByText("Baza Ćwiczeń & Atlas")).toBeTruthy();
+    expect(screen.getByText("Gotowe Rutyny Treningowe")).toBeTruthy();
+    expect(await screen.findByText("FBW A — Całe ciało")).toBeTruthy();
+    expect(screen.getByText("FBW B — Całe ciało")).toBeTruthy();
+    expect(screen.getByTestId("pill-navbar")).toBeTruthy();
 
-    const showAllBtn = getByTestId("show-all-exercises-button");
     await act(async () => {
-      fireEvent.press(showAllBtn);
+      fireEvent.press(screen.getByTestId("show-all-exercises-button"));
     });
     expect(router.push).toHaveBeenCalledWith("/exercises");
 

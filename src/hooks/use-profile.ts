@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { deleteWorkoutHistory, exportWorkoutSessions } from "@/db/workout-history";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import {
   UNDECIDED_MUSCLE_FOCUS,
@@ -148,7 +149,7 @@ export function useProfile() {
     return true;
   }, [name, experienceLevel, fitnessGoal, muscleFocus, updateProfileInStore]);
 
-  const exportData = useCallback((): string => {
+  const exportData = useCallback(async (): Promise<string> => {
     const exportObject: UserDataExport = {
       version: "1.0.0",
       exportedAt: new Date().toISOString(),
@@ -159,11 +160,16 @@ export function useProfile() {
         muscleFocus: muscleFocus ?? onboardingData?.muscleFocus ?? UNDECIDED_MUSCLE_FOCUS,
       },
       appSettings,
+      workoutSessions: await exportWorkoutSessions(),
     };
     return JSON.stringify(exportObject, null, 2);
   }, [name, experienceLevel, fitnessGoal, muscleFocus, onboardingData, appSettings]);
 
   const resetAllData = useCallback(() => {
+    // Workout history and photos are sensitive: removed together with the profile
+    void deleteWorkoutHistory().catch((error: unknown) => {
+      console.error("[db] Failed to delete workout history", error);
+    });
     resetOnboardingInStore();
     resetForm();
   }, [resetOnboardingInStore, resetForm]);

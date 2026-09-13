@@ -1,48 +1,25 @@
-import React, { useState, useCallback } from "react";
-import {
-  View,
-  ScrollView,
-  useWindowDimensions,
-  type NativeSyntheticEvent,
-  type NativeScrollEvent,
-  type LayoutChangeEvent,
-} from "react-native";
+import React from "react";
+import { View, ScrollView } from "react-native";
+import { useCardPager } from "@/hooks/use-card-pager";
 import { WorkoutCoverSlide } from "./WorkoutCoverSlide";
 import { WorkoutExercisesSlide } from "./WorkoutExercisesSlide";
 import { WorkoutAchievementsSlide } from "./WorkoutAchievementsSlide";
 import { WorkoutCardPagination } from "./WorkoutCardPagination";
+import { WorkoutPhotoButton } from "./WorkoutPhotoButton";
 import type { CompletedWorkoutDetail } from "@/schemas/user-profile-screen.schema";
 
 interface WorkoutHistoryCardProps {
   workout: CompletedWorkoutDetail;
+  /** Opens the camera/gallery sheet; the photo is optional and can be added later */
+  onManagePhoto?: (workoutId: string) => void;
 }
 
-export function WorkoutHistoryCard({ workout }: WorkoutHistoryCardProps) {
-  const { width: windowWidth } = useWindowDimensions();
-  const [cardWidth, setCardWidth] = useState<number>(Math.max(280, windowWidth - 32));
-  const [activeSlide, setActiveSlide] = useState(0);
+export function WorkoutHistoryCard({ workout, onManagePhoto }: WorkoutHistoryCardProps) {
+  const hasPhoto = workout.photoUri !== null;
+  const hasAchievements = workout.achievements.length > 0;
+  const totalSlides = 1 + (hasPhoto ? 1 : 0) + (hasAchievements ? 1 : 0);
 
-  const hasPhoto = Boolean(workout.imageAssetKey);
-  const totalSlides = hasPhoto ? 3 : 2;
-
-  const handleLayout = useCallback((e: LayoutChangeEvent) => {
-    const w = Math.round(e.nativeEvent.layout.width);
-    if (w > 0) setCardWidth(w);
-  }, []);
-
-  const handleScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const offsetX = e.nativeEvent.contentOffset.x;
-      if (cardWidth > 0) {
-        const nextIndex = Math.min(
-          totalSlides - 1,
-          Math.max(0, Math.round(offsetX / cardWidth))
-        );
-        setActiveSlide(nextIndex);
-      }
-    },
-    [cardWidth, totalSlides]
-  );
+  const { cardWidth, activeSlide, handleLayout, handleScroll } = useCardPager(totalSlides);
 
   return (
     <View
@@ -79,21 +56,25 @@ export function WorkoutHistoryCard({ workout }: WorkoutHistoryCardProps) {
           completedMeta={`${workout.completedDate} • ${workout.durationMinutes} min`}
           activeSlide={activeSlide}
           totalSlides={totalSlides}
+          hasAchievementsSlide={hasAchievements}
         />
 
-        <WorkoutAchievementsSlide
-          achievements={workout.achievements}
-          workoutId={workout.id}
-          cardWidth={cardWidth}
-          activeSlide={activeSlide}
-          totalSlides={totalSlides}
-        />
+        {hasAchievements && (
+          <WorkoutAchievementsSlide
+            achievements={workout.achievements}
+            workoutId={workout.id}
+            cardWidth={cardWidth}
+            activeSlide={activeSlide}
+            totalSlides={totalSlides}
+          />
+        )}
       </ScrollView>
 
-      <WorkoutCardPagination
-        activeSlide={activeSlide}
-        totalSlides={totalSlides}
-      />
+      {totalSlides > 1 && <WorkoutCardPagination activeSlide={activeSlide} totalSlides={totalSlides} />}
+
+      {onManagePhoto && (
+        <WorkoutPhotoButton workoutId={workout.id} hasPhoto={hasPhoto} onPress={onManagePhoto} />
+      )}
     </View>
   );
 }

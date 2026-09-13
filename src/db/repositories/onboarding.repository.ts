@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 import { getSelectedMuscleGroups } from "@/lib/muscle-focus";
 import {
   LOCAL_USER_ID,
@@ -15,6 +14,7 @@ import {
 } from "@/schemas/onboarding.schema";
 import { userFocusMuscleGroups, userProfiles } from "../schema";
 import type { AppDatabase } from "../types";
+import { parseOrThrow } from "./parse-or-throw";
 
 export interface OnboardingRepository {
   /** Completed onboarding for the user, or null when missing / unreadable. */
@@ -33,14 +33,6 @@ export interface OnboardingRepositoryOptions {
 /** Muscle groups deduplicated and ordered like `MuscleGroupSchema` for stable reads/writes. */
 function toCanonicalMuscleGroups(groups: readonly MuscleGroup[]): MuscleGroup[] {
   return MuscleGroupSchema.options.filter((group) => groups.includes(group));
-}
-
-function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, label: string): T {
-  const result = schema.safeParse(value);
-  if (!result.success) {
-    throw new Error(`[db] Invalid ${label}: ${z.prettifyError(result.error)}`);
-  }
-  return result.data;
 }
 
 export function createOnboardingRepository(

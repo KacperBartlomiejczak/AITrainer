@@ -8,6 +8,7 @@ import {
   type MuscleFocus,
   type MuscleGroup,
 } from "./onboarding.schema";
+import { WorkoutSessionExportSchema } from "./workout-history.schema";
 
 // ── Profile Form Data (Editable from Profile/Settings) ───────
 export const ProfileFormSchema = z.object({
@@ -35,6 +36,7 @@ export const UserDataExportSchema = z.object({
   exportedAt: z.string(),
   profile: ProfileFormSchema,
   appSettings: AppSettingsSchema,
+  workoutSessions: z.array(WorkoutSessionExportSchema),
 });
 
 // ── Exported Types ────────────────────────────────────────────

@@ -1,8 +1,11 @@
 import React from "react";
-import { render, screen, fireEvent, act } from "@testing-library/react-native";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react-native";
 import ProfileScreen from "../profile";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import { Alert } from "react-native";
+import { resetInMemoryDatabase } from "@/db/testing/in-memory-client";
+
+jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
 // Mock router
 const mockBack = jest.fn();
@@ -24,6 +27,10 @@ jest.mock("react-native-safe-area-context", () => ({
 jest.spyOn(Alert, "alert");
 
 describe("ProfileScreen", () => {
+  afterEach(() => {
+    resetInMemoryDatabase();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     useOnboardingStore.setState({
@@ -126,10 +133,12 @@ describe("ProfileScreen", () => {
       fireEvent.press(exportBtn);
     });
 
-    expect(Alert.alert).toHaveBeenCalledWith(
-      "Eksport danych",
-      expect.stringContaining("Twoje dane zostały przygotowane"),
-      expect.any(Array)
+    await waitFor(() =>
+      expect(Alert.alert).toHaveBeenCalledWith(
+        "Eksport danych",
+        expect.stringContaining("Twoje dane zostały przygotowane"),
+        expect.any(Array)
+      )
     );
 
     unmount();

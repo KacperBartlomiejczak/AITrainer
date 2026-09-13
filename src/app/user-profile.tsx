@@ -12,6 +12,7 @@ import {
   PastWorkoutModal,
 } from "@/components/user-profile";
 import { PillNavbar } from "@/components/navigation";
+import { WorkoutPhotoSourceSheet } from "@/components/workout-photo";
 
 export default function UserProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -24,6 +25,8 @@ export default function UserProfileScreen() {
     selectedWorkoutPhoto,
     openWorkoutPhotoModal,
     closeWorkoutPhotoModal,
+    managePhoto,
+    photoSheet,
     openSettings,
     startRoutine,
   } = useUserProfileScreen();
@@ -61,7 +64,7 @@ export default function UserProfileScreen() {
             </Pressable>
           </View>
 
-          {/* 1. Zdjęcia z rutyn / treningów (pionowe prostokąty zaokrąglone) */}
+          {/* 1. Zdjęcia z ukończonych treningów (tylko te, które mają zdjęcie) */}
           <RoutinePhotoCarousel
             photos={routinePhotos}
             onSelectPhoto={openWorkoutPhotoModal}
@@ -76,8 +79,8 @@ export default function UserProfileScreen() {
           {/* 4. Rutyny / treningi użytkownika (karty scrollowane poziomo) */}
           <UserRoutinesList routines={routines} onStartRoutine={startRoutine} />
 
-          {/* 5. Ostatnio wykonane treningi ze zdjęciem na samej górze */}
-          <RecentCompletedWorkouts workouts={recentWorkouts} />
+          {/* 5. Ukończone treningi z bazy; zdjęcie można dodać/zmienić z karty */}
+          <RecentCompletedWorkouts workouts={recentWorkouts} onManagePhoto={managePhoto} />
         </View>
       </ScrollView>
 
@@ -86,6 +89,19 @@ export default function UserProfileScreen() {
         workout={selectedWorkoutPhoto}
         visible={Boolean(selectedWorkoutPhoto)}
         onClose={closeWorkoutPhotoModal}
+      />
+
+      {/* Opcjonalne zdjęcie treningu: aparat lub galeria */}
+      <WorkoutPhotoSourceSheet
+        visible={photoSheet.isOpen}
+        title="Zdjęcie z treningu"
+        hasPhoto={photoSheet.hasPhoto}
+        isSaving={photoSheet.isSaving}
+        errorMessage={photoSheet.errorMessage}
+        dismissLabel="Anuluj"
+        onSelectSource={(source) => void photoSheet.selectSource(source)}
+        onRemovePhoto={() => void photoSheet.removePhoto()}
+        onDismiss={photoSheet.dismiss}
       />
 
       {/* Floating Pill Navigation */}

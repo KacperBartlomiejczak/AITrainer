@@ -1,4 +1,11 @@
-import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 // Relative imports on purpose: drizzle-kit loads this file without tsconfig path aliases
 import {
   ExperienceLevelSchema,
@@ -6,6 +13,7 @@ import {
   MuscleFocusModeSchema,
   MuscleGroupSchema,
 } from "../schemas/onboarding.schema";
+import { RoutineLevelSchema } from "../schemas/routine.schema";
 
 /** Zod enum options as the non-empty tuple Drizzle requires for `text({ enum })`. */
 function toEnumValues<T extends string>(values: readonly T[]): [T, ...T[]] {
@@ -46,4 +54,75 @@ export const userFocusMuscleGroups = sqliteTable(
     muscleGroup: text("muscle_group", { enum: toEnumValues(MuscleGroupSchema.options) }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.userId, table.muscleGroup] })],
+);
+
+// ── Routines ──────────────────────────────────────────────────
+export const routines = sqliteTable("routines", {
+  id: text("id").primaryKey(),
+  // null = built-in routine shipped with the app, so "delete my data" keeps it
+  userId: text("user_id").references(() => userProfiles.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  level: text("level", { enum: toEnumValues(RoutineLevelSchema.options) }).notNull(),
+  daysPerWeek: integer("days_per_week").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+export const routineExercises = sqliteTable(
+  "routine_exercises",
+  {
+    id: text("id").primaryKey(),
+    routineId: text("routine_id")
+      .notNull()
+      .references(() => routines.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    name: text("name").notNull(),
+    targetMuscle: text("target_muscle").notNull(),
+    sets: integer("sets").notNull(),
+    targetReps: text("target_reps").notNull(),
+    restSeconds: integer("rest_seconds").notNull(),
+  },
+  (table) => [uniqueIndex("routine_exercises_routine_position_idx").on(table.routineId, table.position)],
+);
+
+// ── Workout history ───────────────────────────────────────────
+export const workoutSessions = sqliteTable(
+  "workout_sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => userProfiles.id, { onDelete: "cascade" }),
+    // Sessions keep their own snapshot, so history survives deleting the routine
+    routineId: text("routine_id").references(() => routines.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull(),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }).notNull(),
+    durationSeconds: integer("duration_seconds").notNull(),
+    // File name inside the app's workout photo directory (never an absolute URI)
+    photoFileName: text("photo_file_name"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("workout_sessions_user_completed_idx").on(table.userId, table.completedAt)],
+);
+
+export const workoutSessionExercises = sqliteTable(
+  "workout_session_exercises",
+  {
+    id: text("id").primaryKey(),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => workoutSessions.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    name: text("name").notNull(),
+    targetMuscle: text("target_muscle").notNull(),
+    sets: integer("sets").notNull(),
+    targetReps: text("target_reps").notNull(),
+    completed: integer("completed", { mode: "boolean" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("workout_session_exercises_session_position_idx").on(table.sessionId, table.position),
+  ],
 );

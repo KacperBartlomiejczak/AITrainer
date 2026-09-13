@@ -1,7 +1,13 @@
-import { renderHook, act } from "@testing-library/react-native";
+import { renderHook, act, waitFor } from "@testing-library/react-native";
 import { useProfile } from "../use-profile";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import { UserDataExportSchema } from "@/schemas/profile.schema";
+import { resetInMemoryDatabase, saveLocalProfile } from "@/db/testing/in-memory-client";
+import { saveFinishedWorkout } from "@/db/testing/workout-fixtures";
+import { loadWorkoutHistory } from "@/db/workout-history";
+import { getFakeFileSystem } from "@/lib/testing/fake-file-system";
+
+jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
 describe("useProfile", () => {
   beforeEach(() => {
@@ -18,6 +24,7 @@ describe("useProfile", () => {
   });
 
   afterEach(() => {
+    resetInMemoryDatabase();
     useOnboardingStore.setState({
       hasCompletedOnboarding: false,
       onboardingData: null,
@@ -213,13 +220,38 @@ describe("useProfile", () => {
   it("exports user data adhering to UserDataExportSchema", async () => {
     const { result, unmount } = await renderHook(() => useProfile());
 
-    const jsonString = result.current.exportData();
+    const jsonString = await result.current.exportData();
     expect(typeof jsonString).toBe("string");
 
     const parsed = JSON.parse(jsonString);
     const validation = UserDataExportSchema.safeParse(parsed);
     expect(validation.success).toBe(true);
 
+    unmount();
+  });
+
+  it("includes the workout history in the export, without photo file paths", async () => {
+    await saveLocalProfile();
+    const { id } = await saveFinishedWorkout({ withPhoto: true });
+    const { result, unmount } = await renderHook(() => useProfile());
+
+    const parsed = UserDataExportSchema.parse(JSON.parse(await result.current.exportData()));
+
+    expect(parsed.workoutSessions.map((session) => [session.id, session.hasPhoto])).toEqual([[id, true]]);
+    unmount();
+  });
+
+  it("deletes workout history and photos together with the profile", async () => {
+    await saveLocalProfile();
+    await saveFinishedWorkout({ withPhoto: true });
+    const { result, unmount } = await renderHook(() => useProfile());
+
+    await act(async () => {
+      result.current.resetAllData();
+    });
+
+    await waitFor(async () => expect(await loadWorkoutHistory()).toEqual([]));
+    expect(getFakeFileSystem().listFiles().some((uri) => uri.includes("workout-photos/"))).toBe(false);
     unmount();
   });
 

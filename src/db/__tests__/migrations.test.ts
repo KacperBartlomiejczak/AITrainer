@@ -63,3 +63,40 @@ describe("drizzle migrations", () => {
     }
   });
 });
+
+describe("drizzle migration 0002 (routines & workout sessions)", () => {
+  it("keeps an existing profile and adds the new tables", () => {
+    const sqlite = new Database(":memory:");
+    sqlite.pragma("foreign_keys = ON");
+    const db = drizzle(sqlite);
+    const previousFolder = createPartialMigrationsFolder(2);
+
+    try {
+      migrate(db, { migrationsFolder: previousFolder });
+      sqlite
+        .prepare(
+          "INSERT INTO user_profiles VALUES ('local', 'Kacper', 'beginner', 'strength', 'undecided', 1, 1, 1)",
+        )
+        .run();
+
+      migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+
+      expect(sqlite.prepare("SELECT COUNT(*) AS count FROM user_profiles").get()).toEqual({ count: 1 });
+      const tables = sqlite
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
+        .all()
+        .map((table) => (table as { name: string }).name);
+      expect(tables).toEqual(
+        expect.arrayContaining([
+          "routines",
+          "routine_exercises",
+          "workout_sessions",
+          "workout_session_exercises",
+        ]),
+      );
+    } finally {
+      sqlite.close();
+      fs.rmSync(previousFolder, { recursive: true, force: true });
+    }
+  });
+});
