@@ -1,5 +1,6 @@
-import { renderHook } from "@testing-library/react-native";
+import { act, renderHook } from "@testing-library/react-native";
 import { useOnboarding } from "../use-onboarding";
+import { useOnboardingFormStore } from "@/stores/onboarding-form.store";
 
 // Mock expo-router
 const mockPush = jest.fn();
@@ -22,55 +23,22 @@ jest.mock("@/stores/onboarding.store", () => ({
     }),
 }));
 
-// Mutable mock state for the form store
-const mockFormStoreState = {
-  name: "",
-  fitnessGoal: null as string | null,
-  focusMuscleGroups: [] as string[],
-};
+const initialFormState = useOnboardingFormStore.getState();
 
-const mockSetName = jest.fn((name: string) => {
-  mockFormStoreState.name = name;
-});
-const mockSetGoal = jest.fn((goal: string) => {
-  mockFormStoreState.fitnessGoal = goal;
-});
-const mockToggleMuscleGroup = jest.fn((group: string) => {
-  if (mockFormStoreState.focusMuscleGroups.includes(group)) {
-    mockFormStoreState.focusMuscleGroups = mockFormStoreState.focusMuscleGroups.filter(
-      (g) => g !== group
-    );
-  } else {
-    mockFormStoreState.focusMuscleGroups = [...mockFormStoreState.focusMuscleGroups, group];
-  }
-});
-const mockResetForm = jest.fn();
-
-jest.mock("@/stores/onboarding-form.store", () => ({
-  useOnboardingFormStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({
-      get name() {
-        return mockFormStoreState.name;
-      },
-      get fitnessGoal() {
-        return mockFormStoreState.fitnessGoal;
-      },
-      get focusMuscleGroups() {
-        return mockFormStoreState.focusMuscleGroups;
-      },
-      setName: mockSetName,
-      setGoal: mockSetGoal,
-      toggleMuscleGroup: mockToggleMuscleGroup,
-      resetForm: mockResetForm,
-    }),
-}));
+function fillForm(overrides: Partial<ReturnType<typeof useOnboardingFormStore.getState>> = {}) {
+  useOnboardingFormStore.setState({
+    name: "Kacper",
+    experienceLevel: "intermediate",
+    fitnessGoal: "strength",
+    muscleFocus: { mode: "selected", muscleGroups: ["chest"] },
+    ...overrides,
+  });
+}
 
 describe("useOnboarding", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFormStoreState.name = "";
-    mockFormStoreState.fitnessGoal = null;
-    mockFormStoreState.focusMuscleGroups = [];
+    useOnboardingFormStore.setState(initialFormState, true);
   });
 
   it("reports the given currentStep", async () => {
@@ -78,102 +46,92 @@ describe("useOnboarding", () => {
     expect(result.current.currentStep).toBe(0);
   });
 
-  it("reports totalSteps as 4", async () => {
+  it("reports totalSteps as 5", async () => {
     const { result } = await renderHook(() => useOnboarding(0));
-    expect(result.current.totalSteps).toBe(4);
+    expect(result.current.totalSteps).toBe(5);
   });
 
-  it("exposes name from form store", async () => {
-    mockFormStoreState.name = "Kacper";
-    const { result } = await renderHook(() => useOnboarding(0));
+  it("exposes form values from the form store", async () => {
+    fillForm({ muscleFocus: { mode: "undecided" } });
+    const { result } = await renderHook(() => useOnboarding(4));
+
     expect(result.current.name).toBe("Kacper");
-  });
-
-  it("exposes fitnessGoal from form store", async () => {
-    mockFormStoreState.fitnessGoal = "strength";
-    const { result } = await renderHook(() => useOnboarding(1));
+    expect(result.current.experienceLevel).toBe("intermediate");
     expect(result.current.fitnessGoal).toBe("strength");
-  });
-
-  it("exposes focusMuscleGroups from form store", async () => {
-    mockFormStoreState.focusMuscleGroups = ["chest", "back"];
-    const { result } = await renderHook(() => useOnboarding(2));
-    expect(result.current.focusMuscleGroups).toEqual(["chest", "back"]);
+    expect(result.current.muscleFocus).toEqual({ mode: "undecided" });
   });
 
   // ── isStepValid tests ──
 
-  it("isStepValid returns false for step 0 when name is empty", async () => {
-    const { result } = await renderHook(() => useOnboarding(0));
+  it("step 0 (name) requires a non-empty name", async () => {
+    const { result, rerender } = await renderHook(() => useOnboarding(0));
     expect(result.current.isStepValid).toBe(false);
-  });
 
-  it("isStepValid returns true for step 0 when name is set", async () => {
-    mockFormStoreState.name = "Kacper";
-    const { result } = await renderHook(() => useOnboarding(0));
+    await act(async () => useOnboardingFormStore.getState().setName("Kacper"));
+    await rerender({});
     expect(result.current.isStepValid).toBe(true);
   });
 
-  it("isStepValid returns false for step 1 when goal is not set", async () => {
+  it("step 1 (experience) requires an experience level", async () => {
     const { result } = await renderHook(() => useOnboarding(1));
     expect(result.current.isStepValid).toBe(false);
-  });
 
-  it("isStepValid returns true for step 1 when goal is set", async () => {
-    mockFormStoreState.fitnessGoal = "strength";
-    const { result } = await renderHook(() => useOnboarding(1));
+    await act(async () => result.current.setExperienceLevel("beginner"));
     expect(result.current.isStepValid).toBe(true);
   });
 
-  it("isStepValid returns false for step 2 when no muscle groups selected", async () => {
+  it("step 2 (goal) requires a goal", async () => {
     const { result } = await renderHook(() => useOnboarding(2));
     expect(result.current.isStepValid).toBe(false);
-  });
 
-  it("isStepValid returns true for step 2 when muscle groups selected", async () => {
-    mockFormStoreState.focusMuscleGroups = ["chest"];
-    const { result } = await renderHook(() => useOnboarding(2));
+    await act(async () => result.current.setGoal("strength"));
     expect(result.current.isStepValid).toBe(true);
   });
 
-  it("isStepValid returns true for step 3 (summary always valid)", async () => {
+  it("step 3 (muscle focus) is valid with muscle groups or 'not sure yet'", async () => {
     const { result } = await renderHook(() => useOnboarding(3));
+    expect(result.current.isStepValid).toBe(false);
+
+    await act(async () => result.current.toggleMuscleGroup("legs"));
+    expect(result.current.isStepValid).toBe(true);
+    expect(result.current.muscleFocus).toEqual({ mode: "selected", muscleGroups: ["legs"] });
+
+    await act(async () => result.current.toggleUndecidedMuscleFocus());
+    expect(result.current.isStepValid).toBe(true);
+    expect(result.current.muscleFocus).toEqual({ mode: "undecided" });
+
+    await act(async () => result.current.toggleUndecidedMuscleFocus());
+    expect(result.current.isStepValid).toBe(false);
+  });
+
+  it("step 4 (summary) is always valid", async () => {
+    const { result } = await renderHook(() => useOnboarding(4));
     expect(result.current.isStepValid).toBe(true);
   });
 
-  // ── Function exposure and operation tests ──
+  // ── Navigation ──
 
-  it("exposes setName function and invokes store", async () => {
-    const { result } = await renderHook(() => useOnboarding(0));
-    expect(typeof result.current.setName).toBe("function");
-    result.current.setName("Jan");
-    expect(mockSetName).toHaveBeenCalledWith("Jan");
-  });
-
-  it("exposes setGoal function and invokes store", async () => {
-    const { result } = await renderHook(() => useOnboarding(1));
-    expect(typeof result.current.setGoal).toBe("function");
-    result.current.setGoal("muscle_gain");
-    expect(mockSetGoal).toHaveBeenCalledWith("muscle_gain");
-  });
-
-  it("exposes toggleMuscleGroup function and invokes store", async () => {
-    const { result } = await renderHook(() => useOnboarding(2));
-    expect(typeof result.current.toggleMuscleGroup).toBe("function");
-    result.current.toggleMuscleGroup("legs");
-    expect(mockToggleMuscleGroup).toHaveBeenCalledWith("legs");
-  });
-
-  it("nextStep navigates to next step if valid", async () => {
-    mockFormStoreState.name = "Kacper";
-    const { result } = await renderHook(() => useOnboarding(0));
+  it.each([
+    [0, "/(onboarding)/step-experience"],
+    [1, "/(onboarding)/step-goal"],
+    [2, "/(onboarding)/step-muscle-groups"],
+    [3, "/(onboarding)/step-summary"],
+  ] as const)("nextStep from step %i navigates to %s", async (step, route) => {
+    fillForm();
+    const { result } = await renderHook(() => useOnboarding(step));
     result.current.nextStep();
-    expect(mockPush).toHaveBeenCalledWith("/(onboarding)/step-goal");
+    expect(mockPush).toHaveBeenCalledWith(route);
   });
 
   it("nextStep does not navigate if invalid", async () => {
-    mockFormStoreState.name = "";
     const { result } = await renderHook(() => useOnboarding(0));
+    result.current.nextStep();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("nextStep does nothing on the summary step", async () => {
+    fillForm();
+    const { result } = await renderHook(() => useOnboarding(4));
     result.current.nextStep();
     expect(mockPush).not.toHaveBeenCalled();
   });
@@ -190,31 +148,46 @@ describe("useOnboarding", () => {
     expect(mockBack).not.toHaveBeenCalled();
   });
 
-  it("submitOnboarding completes onboarding and leaves navigation to the root guard", async () => {
-    mockFormStoreState.name = "Kacper";
-    mockFormStoreState.fitnessGoal = "strength";
-    mockFormStoreState.focusMuscleGroups = ["chest"];
+  // ── Submit ──
 
-    const { result } = await renderHook(() => useOnboarding(3));
-    result.current.submitOnboarding();
+  it("submitOnboarding completes onboarding and leaves navigation to the root guard", async () => {
+    fillForm({ name: "  Kacper  " });
+
+    const { result } = await renderHook(() => useOnboarding(4));
+    await act(async () => result.current.submitOnboarding());
 
     expect(mockCompleteOnboarding).toHaveBeenCalledWith({
       name: "Kacper",
+      experienceLevel: "intermediate",
       fitnessGoal: "strength",
-      focusMuscleGroups: ["chest"],
+      muscleFocus: { mode: "selected", muscleGroups: ["chest"] },
     });
-    expect(mockResetForm).toHaveBeenCalled();
+    expect(useOnboardingFormStore.getState().name).toBe("");
     // RootLayout guard is the single source of truth for the redirect to home
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  it("submitOnboarding does not complete onboarding when goal is missing", async () => {
-    mockFormStoreState.name = "Kacper";
-    mockFormStoreState.fitnessGoal = null;
-    mockFormStoreState.focusMuscleGroups = ["chest"];
+  it("submitOnboarding saves 'not sure yet' muscle focus", async () => {
+    fillForm({ muscleFocus: { mode: "undecided" } });
 
-    const { result } = await renderHook(() => useOnboarding(3));
-    result.current.submitOnboarding();
+    const { result } = await renderHook(() => useOnboarding(4));
+    await act(async () => result.current.submitOnboarding());
+
+    expect(mockCompleteOnboarding).toHaveBeenCalledWith(
+      expect.objectContaining({ muscleFocus: { mode: "undecided" } }),
+    );
+  });
+
+  it.each([
+    ["goal", { fitnessGoal: null }],
+    ["experience level", { experienceLevel: null }],
+    ["muscle focus", { muscleFocus: null }],
+  ] as const)("submitOnboarding does not complete onboarding when %s is missing", async (_, missing) => {
+    jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    fillForm(missing);
+
+    const { result } = await renderHook(() => useOnboarding(4));
+    await act(async () => result.current.submitOnboarding());
 
     expect(mockCompleteOnboarding).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();

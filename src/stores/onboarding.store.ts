@@ -6,7 +6,7 @@ interface OnboardingStoreState {
   hasCompletedOnboarding: boolean;
   /** Saved onboarding data (null until completed) */
   onboardingData: OnboardingFormData | null;
-  /** Whether the store has been initialized in RAM */
+  /** Whether saved onboarding has been read from the local database */
   isHydrated: boolean;
 }
 
@@ -19,15 +19,17 @@ interface OnboardingStoreActions {
   resetOnboarding: () => void;
   /** Mark store as hydrated / ready in RAM */
   setHydrated: (value: boolean) => void;
+  /** Restore state read from the local database (null = nothing saved yet) */
+  hydrate: (data: OnboardingFormData | null) => void;
 }
 
-type OnboardingStore = OnboardingStoreState & OnboardingStoreActions;
+export type OnboardingStore = OnboardingStoreState & OnboardingStoreActions;
 
 export const useOnboardingStore = create<OnboardingStore>()((set) => ({
-  // ── State (In-memory RAM) ──
+  // ── State (mirrored to SQLite by bindOnboardingPersistence) ──
   hasCompletedOnboarding: false,
   onboardingData: null,
-  isHydrated: true,
+  isHydrated: false,
 
   // ── Actions ──
   completeOnboarding: (data: OnboardingFormData) =>
@@ -50,5 +52,12 @@ export const useOnboardingStore = create<OnboardingStore>()((set) => ({
     }),
 
   setHydrated: (value: boolean) => set({ isHydrated: value }),
+
+  hydrate: (data: OnboardingFormData | null) =>
+    set({
+      hasCompletedOnboarding: data !== null,
+      onboardingData: data,
+      isHydrated: true,
+    }),
 }));
 

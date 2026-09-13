@@ -8,8 +8,9 @@ import {
 describe("ProfileFormSchema", () => {
   const validData: ProfileFormData = {
     name: "Kacper",
+    experienceLevel: "beginner",
     fitnessGoal: "muscle_gain",
-    focusMuscleGroups: ["chest", "back"],
+    muscleFocus: { mode: "selected", muscleGroups: ["chest", "back"] },
   };
 
   it("accepts valid profile form data", () => {
@@ -18,7 +19,7 @@ describe("ProfileFormSchema", () => {
     if (result.success) {
       expect(result.data.name).toBe("Kacper");
       expect(result.data.fitnessGoal).toBe("muscle_gain");
-      expect(result.data.focusMuscleGroups).toEqual(["chest", "back"]);
+      expect(result.data.muscleFocus).toEqual({ mode: "selected", muscleGroups: ["chest", "back"] });
     }
   });
 
@@ -55,12 +56,25 @@ describe("ProfileFormSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects empty focusMuscleGroups array", () => {
+  it("rejects empty selected muscle groups", () => {
     const result = ProfileFormSchema.safeParse({
       ...validData,
-      focusMuscleGroups: [],
+      muscleFocus: { mode: "selected", muscleGroups: [] },
     });
     expect(result.success).toBe(false);
+  });
+
+  it("accepts 'not sure yet' muscle focus", () => {
+    const result = ProfileFormSchema.safeParse({
+      ...validData,
+      muscleFocus: { mode: "undecided" },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing experience level", () => {
+    const { experienceLevel: _, ...rest } = validData;
+    expect(ProfileFormSchema.safeParse(rest).success).toBe(false);
   });
 
   it("rejects invalid fitnessGoal", () => {
@@ -103,8 +117,9 @@ describe("UserDataExportSchema", () => {
       exportedAt: new Date().toISOString(),
       profile: {
         name: "Kacper",
+        experienceLevel: "advanced",
         fitnessGoal: "strength",
-        focusMuscleGroups: ["chest", "legs"],
+        muscleFocus: { mode: "undecided" },
       },
       appSettings: {
         theme: "dark",
@@ -112,9 +127,33 @@ describe("UserDataExportSchema", () => {
         hapticsEnabled: true,
         units: "metric",
       },
+      workoutSessions: [
+        {
+          id: "wks_1",
+          routineId: "rtn_fbw_a",
+          title: "FBW A — Całe ciało",
+          startedAt: "2026-09-13T17:00:00.000Z",
+          completedAt: "2026-09-13T17:45:00.000Z",
+          durationSeconds: 2700,
+          hasPhoto: true,
+          exercises: [
+            { name: "Przysiad ze sztangą", targetMuscle: "Nogi", sets: 3, targetReps: "8-10", completed: true },
+          ],
+        },
+      ],
     };
 
     const result = UserDataExportSchema.safeParse(exportData);
     expect(result.success).toBe(true);
+  });
+
+  it("requires the workout history in the export (health data must be exportable)", () => {
+    const result = UserDataExportSchema.safeParse({
+      version: "1.0.0",
+      exportedAt: new Date().toISOString(),
+      profile: { name: "Kacper", experienceLevel: "advanced", fitnessGoal: "strength", muscleFocus: { mode: "undecided" } },
+      appSettings: { theme: "dark", soundEnabled: true, hapticsEnabled: true, units: "metric" },
+    });
+    expect(result.success).toBe(false);
   });
 });

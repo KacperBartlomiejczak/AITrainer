@@ -1,9 +1,14 @@
 import { useState, useCallback, useMemo } from "react";
+import { MOCK_FRIENDS_FEED } from "@/lib/mock-friends-feed";
+import { toRecentActivity } from "@/lib/workout-history-mappers";
 import { HomeScreenDataSchema, type HomeScreenData } from "@/schemas/home.schema";
+import type { WorkoutHistoryEntry } from "@/schemas/workout-history.schema";
+import { useWorkoutHistory } from "./use-workout-history";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import { OnboardingFormSchema } from "@/schemas/onboarding.schema";
 
-const INITIAL_MOCK_HOME_DATA: HomeScreenData = {
+/** Sections without a data source yet stay mocked; recent activity comes from the database. */
+const INITIAL_MOCK_HOME_DATA: Omit<HomeScreenData, "recentActivity" | "friendsFeed"> = {
   user: {
     id: "usr_kacper_01",
     name: "Kacper",
@@ -106,54 +111,47 @@ const INITIAL_MOCK_HOME_DATA: HomeScreenData = {
       route: "/history",
     },
   ],
-  recentActivity: {
-    id: "rec_prev_01",
-    title: "Plecy + Biceps (FBW B)",
-    completedAt: "Wczoraj, 19:15",
-    durationMinutes: 58,
-    totalVolumeKg: 4850,
-    personalRecordsCount: 2,
-  },
 };
 
+function buildHomeScreenData(
+  latestWorkout: WorkoutHistoryEntry | undefined,
+  now: Date,
+): HomeScreenData {
+  const candidate: HomeScreenData = {
+    ...INITIAL_MOCK_HOME_DATA,
+    recentActivity: latestWorkout ? toRecentActivity(latestWorkout, now) : null,
+    friendsFeed: [...MOCK_FRIENDS_FEED],
+  };
+  const parsed = HomeScreenDataSchema.safeParse(candidate);
+  if (!parsed.success) {
+    console.warn("[home] Home screen data failed validation", { raw: candidate });
+  }
+  return parsed.success ? parsed.data : candidate;
+}
+
 export function useHomeScreen() {
-  const [data, setData] = useState<HomeScreenData>(() => {
-    const parsed = HomeScreenDataSchema.safeParse(INITIAL_MOCK_HOME_DATA);
-    if (parsed.success) {
-      return parsed.data;
-    }
-    // Fallback safe defaults if validation fails
-    return INITIAL_MOCK_HOME_DATA;
-  });
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const history = useWorkoutHistory();
+  const { reload: reloadHistory } = history;
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const latestWorkout = history.entries[0];
+
+  const data = useMemo(() => buildHomeScreenData(latestWorkout, new Date()), [latestWorkout]);
 
   const refreshData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+    setIsRefreshing(true);
     try {
-      // Simulate network / storage delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const parsed = HomeScreenDataSchema.safeParse(INITIAL_MOCK_HOME_DATA);
-      if (parsed.success) {
-        setData(parsed.data);
-      } else {
-        console.warn("HomeScreenData validation warning:", parsed.error);
-        setError("Nie udało się zaktualizować danych. Spróbuj ponownie.");
-      }
-    } catch {
-      setError("Wystąpił błąd podczas pobierania danych.");
+      await reloadHistory();
     } finally {
-      setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, []);
+  }, [reloadHistory]);
 
   const rawOnboardingData = useOnboardingStore((s) => s.onboardingData);
 
   const personalizedData = useMemo(() => {
     if (!rawOnboardingData) return data;
 
-    // Runtime validation with Zod to prevent crashes on corrupt/stale AsyncStorage payload
+    // Runtime validation with Zod to prevent crashes on a corrupt/stale persisted payload
     const parsed = OnboardingFormSchema.safeParse(rawOnboardingData);
     if (!parsed.success) {
       return data;
@@ -170,8 +168,8 @@ export function useHomeScreen() {
 
   return {
     data: personalizedData,
-    isLoading,
-    error,
+    isLoading: history.status === "loading" || isRefreshing,
+    error: history.status === "error" ? "Nie udało się wczytać historii treningów. Spróbuj ponownie." : null,
     refreshData,
   };
 }

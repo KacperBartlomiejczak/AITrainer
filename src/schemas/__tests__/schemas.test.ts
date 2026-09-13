@@ -1,3 +1,4 @@
+import { MOCK_FRIENDS_FEED } from "@/lib/mock-friends-feed";
 import { UserProfileSchema } from "../user.schema";
 import { WorkoutSummarySchema, RecentActivitySchema } from "../workout.schema";
 import { AiCoachTipSchema } from "../ai-coach.schema";
@@ -67,12 +68,18 @@ describe("Domain Zod Schemas Validation", () => {
         title: "Plecy + Biceps",
         completedAt: "Wczoraj, 19:15",
         durationMinutes: 58,
-        totalVolumeKg: 4850,
-        personalRecordsCount: 2,
+        completedExerciseCount: 4,
+        totalExerciseCount: 5,
+        photoUri: null,
       };
 
       const result = RecentActivitySchema.safeParse(validActivity);
       expect(result.success).toBe(true);
+      expect(
+        RecentActivitySchema.safeParse({ ...validActivity, photoUri: "file:///document/workout-photos/a-1.jpg" })
+          .success,
+      ).toBe(true);
+      expect(RecentActivitySchema.safeParse({ ...validActivity, totalExerciseCount: 0 }).success).toBe(false);
     });
   });
 
@@ -157,9 +164,11 @@ describe("Domain Zod Schemas Validation", () => {
           title: "Plecy + Biceps",
           completedAt: "Wczoraj, 18:30",
           durationMinutes: 62,
-          totalVolumeKg: 4250,
-          personalRecordsCount: 2,
+          completedExerciseCount: 5,
+          totalExerciseCount: 5,
+          photoUri: null,
         },
+        friendsFeed: [...MOCK_FRIENDS_FEED],
       };
 
       const result = HomeScreenDataSchema.safeParse(homeData);

@@ -9,7 +9,7 @@ import {
 
 
 // ---------------------------------------------------------------------------
-// Full exercise catalog — 42 ćwiczenia pokrywające wszystkie partie mięśniowe
+// Full exercise catalog — 39 ćwiczeń pokrywających wszystkie partie mięśniowe
 // ---------------------------------------------------------------------------
 export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
   // ── KLATKA PIERSIOWA ──────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     gifFile: "videos/0047-3TZduzM.gif",
   },
   {
-    id: "0033",
+    id: "1311",
     name: "Pompki szerokim rozstawem rąk",
     bodyPart: "chest",
     category: "chest",
@@ -52,11 +52,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["triceps", "shoulders"],
     instructionsPl:
       "Przyjmij pozycję podporu z rękoma rozstawionymi szerzej niż ramiona. Opuść ciało kontrolowanie aż klatka dotknie podłogi, a następnie wypchnij się w górę.",
-    imageFile: "images/0033-GrO65fd.jpg",
-    gifFile: "videos/0033-GrO65fd.gif",
+    imageFile: "images/1311-JmMVpR3.jpg",
+    gifFile: "videos/1311-JmMVpR3.gif",
   },
   {
-    id: "0035",
+    id: "0289",
     name: "Wyciskanie hantli na ławce",
     bodyPart: "chest",
     category: "chest",
@@ -66,11 +66,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["shoulders", "triceps"],
     instructionsPl:
       "Połóż się na ławce z hantlami na wysokości klatki. Wyciśnij hantle w górę, a następnie kontrolowanie opuść z powrotem.",
-    imageFile: "images/0035-LMGXZn8.jpg",
-    gifFile: "videos/0035-LMGXZn8.gif",
+    imageFile: "images/0289-SpYC0Kp.jpg",
+    gifFile: "videos/0289-SpYC0Kp.gif",
   },
   {
-    id: "0022",
+    id: "0251",
     name: "Dipy na poręczach (klatka)",
     bodyPart: "chest",
     category: "chest",
@@ -80,11 +80,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["triceps", "shoulders"],
     instructionsPl:
       "Chwyć poręcze i wyprostuj ręce. Pochyl tułów lekko do przodu i opuść ciało uginając łokcie, następnie wypchnij się w górę.",
-    imageFile: "images/0022-znLogoF.jpg",
-    gifFile: "videos/0022-znLogoF.gif",
+    imageFile: "images/0251-9WTm7dq.jpg",
+    gifFile: "videos/0251-9WTm7dq.gif",
   },
   {
-    id: "0036",
+    id: "0308",
     name: "Rozpiętki z hantlami na ławce",
     bodyPart: "chest",
     category: "chest",
@@ -94,13 +94,13 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["biceps", "shoulders"],
     instructionsPl:
       "Połóż się na ławce z hantlami nad klatką. Opuszczaj ręce na boki w łuku, trzymając lekkie ugięcie w łokciach, aż poczujesz rozciągnięcie mięśni.",
-    imageFile: "images/0036-hl8DUh8.jpg",
-    gifFile: "videos/0036-hl8DUh8.gif",
+    imageFile: "images/0308-yz9nUhF.jpg",
+    gifFile: "videos/0308-yz9nUhF.gif",
   },
 
   // ── PLECY ─────────────────────────────────────────────────────────────────
   {
-    id: "0007",
+    id: "0198",
     name: "Ściąganie drążka wyciągu pionowego",
     bodyPart: "back",
     category: "back",
@@ -110,11 +110,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["biceps", "rear delts"],
     instructionsPl:
       "Chwyć drążek szerokim nachwytem. Ściągaj drążek w dół w kierunku górnej części klatki, napinając mocno łopatki. Wykonuj ruch kontrolowanie.",
-    imageFile: "images/0007-4IKbhHV.jpg",
-    gifFile: "videos/0007-4IKbhHV.gif",
+    imageFile: "images/0198-RVwzP10.jpg",
+    gifFile: "videos/0198-RVwzP10.gif",
   },
   {
-    id: "0026",
+    id: "0027",
     name: "Wiosłowanie sztangą w opadzie tułowia",
     bodyPart: "back",
     category: "back",
@@ -124,11 +124,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["biceps", "lats"],
     instructionsPl:
       "Pochyl się do przodu pod kątem ~45 stopni, plecy proste. Przyciągnij sztangę do brzucha, ściskając łopatki w górnej pozycji.",
-    imageFile: "images/0026-W9pFVv1.jpg",
-    gifFile: "videos/0026-W9pFVv1.gif",
+    imageFile: "images/0027-eZyBC3j.jpg",
+    gifFile: "videos/0027-eZyBC3j.gif",
   },
   {
-    id: "0030",
+    id: "0652",
     name: "Podciąganie szerokim chwytem (nachwytem)",
     bodyPart: "back",
     category: "back",
@@ -138,11 +138,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["biceps", "rear delts"],
     instructionsPl:
       "Chwyć drążek szerokim nachwytem. Podciągnij się do momentu gdy broda przekroczy poziom drążka. Wykonuj ruch kontrolowanie.",
-    imageFile: "images/0030-J6Dx1Mu.jpg",
-    gifFile: "videos/0030-J6Dx1Mu.gif",
+    imageFile: "images/0652-lBDjFxJ.jpg",
+    gifFile: "videos/0652-lBDjFxJ.gif",
   },
   {
-    id: "0031",
+    id: "0292",
     name: "Wiosłowanie hantlem jednoręcznie",
     bodyPart: "back",
     category: "back",
@@ -152,11 +152,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["biceps", "lats"],
     instructionsPl:
       "Oprzyj jedno kolano i rękę o ławkę. Chwyć hantel drugą ręką i przyciągnij go do biodra, ściskając łopatkę.",
-    imageFile: "images/0031-25GPyDY.jpg",
-    gifFile: "videos/0031-25GPyDY.gif",
+    imageFile: "images/0292-C0MA9bC.jpg",
+    gifFile: "videos/0292-C0MA9bC.gif",
   },
   {
-    id: "0032",
+    id: "0180",
     name: "Ściąganie wyciągu dolnego do brzucha",
     bodyPart: "back",
     category: "back",
@@ -166,11 +166,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["biceps", "lats"],
     instructionsPl:
       "Usiądź przy wyciągu dolnym. Przyciągnij uchwyt do brzucha, ściskając łopatki, następnie kontrolowanie wróć do pozycji wyjściowej.",
-    imageFile: "images/0032-ila4NZS.jpg",
-    gifFile: "videos/0032-ila4NZS.gif",
+    imageFile: "images/0180-hvV79Si.jpg",
+    gifFile: "videos/0180-hvV79Si.gif",
   },
   {
-    id: "0034",
+    id: "0032",
     name: "Martwy ciąg",
     bodyPart: "back",
     category: "back",
@@ -180,8 +180,8 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["glutes", "hamstrings", "lats"],
     instructionsPl:
       "Stań nad sztangą ze stopami na szerokość bioder. Zegnij kolana, chwyć sztangę nachwytem i unoś ją wyprostowanymi plecami aż do pełnego wyprostu bioder.",
-    imageFile: "images/0034-hMEptv0.jpg",
-    gifFile: "videos/0034-hMEptv0.gif",
+    imageFile: "images/0032-ila4NZS.jpg",
+    gifFile: "videos/0032-ila4NZS.gif",
   },
 
   // ── NOGI (GÓRNA CZĘŚĆ) ────────────────────────────────────────────────────
@@ -200,7 +200,7 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     gifFile: "videos/0043-qXTaZnJ.gif",
   },
   {
-    id: "0053",
+    id: "0514",
     name: "Przysiad z wyskokiem",
     bodyPart: "upper legs",
     category: "upper legs",
@@ -210,11 +210,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["glutes", "calves"],
     instructionsPl:
       "Wykonaj dynamiczny przysiad, a następnie wybij się mocno w górę. Amortyzuj lądowanie miękko na śródstopiu, natychmiast przechodząc w kolejny przysiad.",
-    imageFile: "images/0053-1gFNTZV.jpg",
-    gifFile: "videos/0053-1gFNTZV.gif",
+    imageFile: "images/0514-LIlE5Tn.jpg",
+    gifFile: "videos/0514-LIlE5Tn.gif",
   },
   {
-    id: "0045",
+    id: "0054",
     name: "Wykrok ze sztangą",
     bodyPart: "upper legs",
     category: "upper legs",
@@ -224,11 +224,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["glutes", "hamstrings"],
     instructionsPl:
       "Stań z sztangą na karku. Zrób duży krok do przodu, opuść tylne kolano blisko podłogi, a następnie wróć do pozycji wyjściowej.",
-    imageFile: "images/0045-GXoaSgn.jpg",
-    gifFile: "videos/0045-GXoaSgn.gif",
+    imageFile: "images/0054-t8iSghb.jpg",
+    gifFile: "videos/0054-t8iSghb.gif",
   },
   {
-    id: "0046",
+    id: "0585",
     name: "Prostowanie nóg na maszynie",
     bodyPart: "upper legs",
     category: "upper legs",
@@ -238,11 +238,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: [],
     instructionsPl:
       "Usiądź na maszynie z nogami pod wałkiem. Prostuj nogi do pełnego wyprostu, napinając mocno czworogłowe, następnie kontrolowanie wróć.",
-    imageFile: "images/0046-5VCj6iH.jpg",
-    gifFile: "videos/0046-5VCj6iH.gif",
+    imageFile: "images/0585-my33uHU.jpg",
+    gifFile: "videos/0585-my33uHU.gif",
   },
   {
-    id: "0048",
+    id: "0586",
     name: "Uginanie nóg leżąc (maszyna)",
     bodyPart: "upper legs",
     category: "upper legs",
@@ -252,11 +252,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["calves"],
     instructionsPl:
       "Połóż się na maszynie twarzą w dół. Ugnij nogi w kolanach, przyciągając wałek do pośladków. Powoli wróć do pozycji wyjściowej.",
-    imageFile: "images/0048-641mIfk.jpg",
-    gifFile: "videos/0048-641mIfk.gif",
+    imageFile: "images/0586-17lJ1kr.jpg",
+    gifFile: "videos/0586-17lJ1kr.gif",
   },
   {
-    id: "0049",
+    id: "3013",
     name: "Glute bridge (uniesienie bioder)",
     bodyPart: "upper legs",
     category: "upper legs",
@@ -266,8 +266,8 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["hamstrings", "lower back"],
     instructionsPl:
       "Połóż się na plecach, ugnij kolana. Unieś biodra aż ciało tworzy prostą linię od kolan do barków, napinając mocno pośladki na szczycie.",
-    imageFile: "images/0049-dmgMp3n.jpg",
-    gifFile: "videos/0049-dmgMp3n.gif",
+    imageFile: "images/3013-u0cNiij.jpg",
+    gifFile: "videos/3013-u0cNiij.gif",
   },
 
   // ── RAMIONA (GÓRNA CZĘŚĆ) ─────────────────────────────────────────────────
@@ -277,7 +277,7 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     bodyPart: "upper arms",
     category: "upper arms",
     target: "Biceps",
-    equipment: "Sztanga łamana",
+    equipment: "Sztanga",
     muscleGroup: "biceps",
     secondaryMuscles: ["forearms"],
     instructionsPl:
@@ -286,7 +286,7 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     gifFile: "videos/0070-qOgPVf6.gif",
   },
   {
-    id: "0072",
+    id: "0285",
     name: "Uginanie hantli ze skrętem nadgarstka",
     bodyPart: "upper arms",
     category: "upper arms",
@@ -296,11 +296,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["forearms"],
     instructionsPl:
       "Trzymaj hantle wzdłuż ciała. Uginaj łokcie unosząc hantle, obracając nadgarstki tak aby dłonie skierowane były ku górze w szczytowej pozycji.",
-    imageFile: "images/0072-WLvTAv5.jpg",
-    gifFile: "videos/0072-WLvTAv5.gif",
+    imageFile: "images/0285-BU15nH4.jpg",
+    gifFile: "videos/0285-BU15nH4.gif",
   },
   {
-    id: "0073",
+    id: "0201",
     name: "Triceps – prostowanie ramion na wyciągu",
     bodyPart: "upper arms",
     category: "upper arms",
@@ -310,11 +310,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: [],
     instructionsPl:
       "Stań przy wyciągu i chwyć drążek. Trzymając łokcie przy ciele, wyprostuj ramiona w dół, mocno napinając triceps.",
-    imageFile: "images/0073-i6LWjok.jpg",
-    gifFile: "videos/0073-i6LWjok.gif",
+    imageFile: "images/0201-3ZflifB.jpg",
+    gifFile: "videos/0201-3ZflifB.gif",
   },
   {
-    id: "0074",
+    id: "0129",
     name: "Dipy na ławce (triceps)",
     bodyPart: "upper arms",
     category: "upper arms",
@@ -324,11 +324,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["shoulders"],
     instructionsPl:
       "Oprzyj dłonie o krawędź ławki za plecami. Opuść ciało uginając łokcie, następnie wypchnij się z powrotem do pozycji wyjściowej.",
-    imageFile: "images/0074-za9Ni4z.jpg",
-    gifFile: "videos/0074-za9Ni4z.gif",
+    imageFile: "images/0129-RrLske5.jpg",
+    gifFile: "videos/0129-RrLske5.gif",
   },
   {
-    id: "0075",
+    id: "0030",
     name: "Wyciskanie wąskim chwytem (triceps)",
     bodyPart: "upper arms",
     category: "upper arms",
@@ -338,11 +338,11 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["chest", "shoulders"],
     instructionsPl:
       "Połóż się na ławce i chwyć sztangę wąskim chwytem. Wyciśnij sztangę trzymając łokcie blisko ciała, skupiając napięcie na tricepsie.",
-    imageFile: "images/0075-Ln9iTbU.jpg",
-    gifFile: "videos/0075-Ln9iTbU.gif",
+    imageFile: "images/0030-J6Dx1Mu.jpg",
+    gifFile: "videos/0030-J6Dx1Mu.gif",
   },
   {
-    id: "0076",
+    id: "0313",
     name: "Młotki (hammer curl) z hantlami",
     bodyPart: "upper arms",
     category: "upper arms",
@@ -352,8 +352,8 @@ export const INITIAL_CATALOG_EXERCISES: ExerciseCatalogList = [
     secondaryMuscles: ["forearms", "brachialis"],
     instructionsPl:
       "Trzymaj hantle z dłońmi skierowanymi ku sobie. Uginaj łokcie naprzemiennie lub oburącz, zachowując neutralny chwyt przez cały ruch.",
-    imageFile: "images/0076-S9zHIvU.jpg",
-    gifFile: "videos/0076-S9zHIvU.gif",
+    imageFile: "images/0313-slDvUAU.jpg",
+    gifFile: "videos/0313-slDvUAU.gif",
   },
 
   // ── BARKI ─────────────────────────────────────────────────────────────────

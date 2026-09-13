@@ -43,3 +43,6 @@ example
 # generated native folders
 /ios
 /android
+
+# drizzle-kit local cache
+.drizzle/

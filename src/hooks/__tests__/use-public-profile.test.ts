@@ -8,8 +8,9 @@ describe("usePublicProfile", () => {
     useOnboardingStore.setState({
       onboardingData: {
         name: "Michał",
+        experienceLevel: "intermediate",
         fitnessGoal: "muscle_gain",
-        focusMuscleGroups: ["chest", "arms"],
+        muscleFocus: { mode: "selected", muscleGroups: ["chest", "arms"] },
       },
       hasCompletedOnboarding: true,
       isHydrated: true,

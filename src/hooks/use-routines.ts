@@ -1,71 +1,20 @@
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "expo-router";
-import {
-  type RoutineLevel,
-  type RoutineList,
-  RoutineListSchema,
-} from "@/schemas/routine.schema";
-
-export const INITIAL_ROUTINES: RoutineList = [
-  {
-    id: "rtn_fbw_01",
-    title: "FBW dla Początkujących",
-    description: "Kompleksowy trening całego ciała z wolnymi ciężarami.",
-    durationMinutes: 45,
-    daysPerWeek: 3,
-    level: "beginner",
-    targetMuscleGroups: ["Klatka", "Plecy", "Nogi", "Barki"],
-    exerciseCount: 5,
-    isPopular: true,
-  },
-  {
-    id: "rtn_push_02",
-    title: "Push (Klatka + Barki + Triceps)",
-    description: "Skupienie na mięśniach pchających i budowie siły.",
-    durationMinutes: 55,
-    daysPerWeek: 4,
-    level: "intermediate",
-    targetMuscleGroups: ["Klatka", "Barki", "Triceps"],
-    exerciseCount: 6,
-    isPopular: false,
-  },
-  {
-    id: "rtn_pull_03",
-    title: "Pull (Plecy + Tył barku + Biceps)",
-    description: "Rozwój szerokości i grubości pleców oraz ramion.",
-    durationMinutes: 50,
-    daysPerWeek: 4,
-    level: "intermediate",
-    targetMuscleGroups: ["Plecy", "Biceps"],
-    exerciseCount: 5,
-    isPopular: false,
-  },
-  {
-    id: "rtn_legs_04",
-    title: "Legs & Core (Nogi + Brzuch)",
-    description: "Potężny bodziec na dolne partie ciała i stabilizację tułowia.",
-    durationMinutes: 60,
-    daysPerWeek: 3,
-    level: "advanced",
-    targetMuscleGroups: ["Nogi", "Brzuch"],
-    exerciseCount: 6,
-    isPopular: false,
-  },
-];
+import { toRoutineItem } from "@/lib/routine-mappers";
+import type { RoutineLevel, RoutineList } from "@/schemas/routine.schema";
+import { useRoutineLibrary } from "./use-routine-library";
 
 export function useRoutines() {
   const router = useRouter();
+  const { status, routines: storedRoutines } = useRoutineLibrary();
   const [filterLevel, setFilterLevel] = useState<RoutineLevel | "all">("all");
 
-  const validatedRoutines = useMemo(() => {
-    const parsed = RoutineListSchema.safeParse(INITIAL_ROUTINES);
-    return parsed.success ? parsed.data : INITIAL_ROUTINES;
-  }, []);
+  const routines: RoutineList = useMemo(() => storedRoutines.map(toRoutineItem), [storedRoutines]);
 
   const filteredRoutines = useMemo(() => {
-    if (filterLevel === "all") return validatedRoutines;
-    return validatedRoutines.filter((r) => r.level === filterLevel);
-  }, [filterLevel, validatedRoutines]);
+    if (filterLevel === "all") return routines;
+    return routines.filter((r) => r.level === filterLevel);
+  }, [filterLevel, routines]);
 
   const startRoutine = useCallback(
     (routineId: string) => {
@@ -79,8 +28,9 @@ export function useRoutines() {
   }, [router]);
 
   return {
-    routines: validatedRoutines,
+    routines,
     filteredRoutines,
+    isLoading: status === "loading",
     filterLevel,
     setFilterLevel,
     startRoutine,

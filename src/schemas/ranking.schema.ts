@@ -282,7 +282,7 @@ export function calculateOverallRank(
   });
 
   // Dominant league determination
-  let dominantLeagueId: StrengthLeagueId = "bronze";
+  let dominantLeagueId: StrengthLeagueId | null = null;
   for (const leagueId of LEAGUE_ORDER) {
     if ((leagueCounts[leagueId] ?? 0) >= 2) {
       dominantLeagueId = leagueId;
@@ -291,7 +291,7 @@ export function calculateOverallRank(
   }
 
   // If no 2+ match, check top league achieved
-  if (dominantLeagueId === "bronze") {
+  if (!dominantLeagueId) {
     for (const leagueId of LEAGUE_ORDER) {
       if ((leagueCounts[leagueId] ?? 0) >= 1) {
         dominantLeagueId = leagueId;
@@ -301,7 +301,7 @@ export function calculateOverallRank(
   }
 
   return {
-    overallLeague: STRENGTH_LEAGUES[dominantLeagueId],
+    overallLeague: STRENGTH_LEAGUES[dominantLeagueId ?? "bronze"],
     totalScore,
   };
 }
@@ -335,7 +335,13 @@ export const RankingScreenDataSchema = z.object({
   overallLeague: StrengthLeagueSchema,
   totalScore: z.number().nonnegative(),
   selectedMuscle: RankingMuscleGroupSchema,
-  muscleRanks: z.array(MuscleRankItemSchema).length(7),
+  muscleRanks: z
+    .array(MuscleRankItemSchema)
+    .length(7)
+    .refine(
+      (items) => new Set(items.map((i) => i.muscle)).size === 7,
+      { message: "All 7 muscle groups must be unique" },
+    ),
   leaderboard: z.array(LeaderboardUserSchema).min(1),
 });
 

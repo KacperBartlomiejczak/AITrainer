@@ -1,15 +1,22 @@
-import { renderHook, act } from "@testing-library/react-native";
+import { renderHook, act, waitFor } from "@testing-library/react-native";
 import { useRoutines } from "../use-routines";
 import { useRouter } from "expo-router";
+import { resetInMemoryDatabase } from "@/db/testing/in-memory-client";
+
+jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
 describe("useRoutines", () => {
-  it("returns initial list of routines validated by Zod", async () => {
+  afterEach(() => {
+    resetInMemoryDatabase();
+  });
+
+  it("returns the two basic routines stored in the database", async () => {
     const { result, unmount } = await renderHook(() => useRoutines());
 
-    expect(result.current.routines.length).toBeGreaterThanOrEqual(3);
-    expect(result.current.filteredRoutines.length).toBe(
-      result.current.routines.length
-    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.routines.map((routine) => routine.id)).toEqual(["rtn_fbw_a", "rtn_fbw_b"]);
+    expect(result.current.filteredRoutines.length).toBe(result.current.routines.length);
     expect(result.current.filterLevel).toBe("all");
 
     unmount();
@@ -17,15 +24,18 @@ describe("useRoutines", () => {
 
   it("filters routines by level", async () => {
     const { result, unmount } = await renderHook(() => useRoutines());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      result.current.setFilterLevel("advanced");
+    });
+    expect(result.current.filteredRoutines).toEqual([]);
 
     await act(async () => {
       result.current.setFilterLevel("beginner");
     });
-
     expect(result.current.filterLevel).toBe("beginner");
-    expect(
-      result.current.filteredRoutines.every((r) => r.level === "beginner")
-    ).toBe(true);
+    expect(result.current.filteredRoutines).toHaveLength(2);
 
     unmount();
   });
@@ -35,10 +45,10 @@ describe("useRoutines", () => {
     const { result, unmount } = await renderHook(() => useRoutines());
 
     await act(async () => {
-      result.current.startRoutine("rtn_fbw_01");
+      result.current.startRoutine("rtn_fbw_a");
     });
 
-    expect(router.push).toHaveBeenCalledWith("/workout/rtn_fbw_01");
+    expect(router.push).toHaveBeenCalledWith("/workout/rtn_fbw_a");
 
     unmount();
   });

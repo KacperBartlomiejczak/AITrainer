@@ -92,6 +92,12 @@ jest.mock("@/stores/onboarding.store", () => ({
   }),
 }));
 
+// Mock database bootstrap (native SQLite is unavailable in Jest; covered by its own tests)
+const mockUseDatabaseBootstrap = jest.fn(() => "ready");
+jest.mock("@/hooks/use-database-bootstrap", () => ({
+  useDatabaseBootstrap: () => mockUseDatabaseBootstrap(),
+}));
+
 describe("RootLayout", () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -107,6 +113,11 @@ describe("RootLayout", () => {
   afterEach(() => {
     jest.clearAllTimers();
     jest.useRealTimers();
+  });
+
+  it("starts the database bootstrap so saved onboarding is restored", async () => {
+    await render(<RootLayout />);
+    expect(mockUseDatabaseBootstrap).toHaveBeenCalled();
   });
 
   it("always renders the Stack navigator for Expo Router compliance", async () => {

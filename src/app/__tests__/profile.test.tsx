@@ -1,8 +1,11 @@
 import React from "react";
-import { render, screen, fireEvent, act } from "@testing-library/react-native";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react-native";
 import ProfileScreen from "../profile";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import { Alert } from "react-native";
+import { resetInMemoryDatabase } from "@/db/testing/in-memory-client";
+
+jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
 // Mock router
 const mockBack = jest.fn();
@@ -24,14 +27,19 @@ jest.mock("react-native-safe-area-context", () => ({
 jest.spyOn(Alert, "alert");
 
 describe("ProfileScreen", () => {
+  afterEach(() => {
+    resetInMemoryDatabase();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     useOnboardingStore.setState({
       hasCompletedOnboarding: true,
       onboardingData: {
         name: "Kacper",
+        experienceLevel: "beginner",
         fitnessGoal: "muscle_gain",
-        focusMuscleGroups: ["chest", "back"],
+        muscleFocus: { mode: "selected", muscleGroups: ["chest", "back"] },
       },
       isHydrated: true,
     });
@@ -53,6 +61,29 @@ describe("ProfileScreen", () => {
     expect(screen.getByText("Masa mięśniowa")).toBeTruthy();
     expect(screen.getByText("Klatka piersiowa")).toBeTruthy();
     expect(screen.getByText("Zapisz zmiany")).toBeTruthy();
+
+    unmount();
+  });
+
+  it("edits experience level and 'Jeszcze nie wiem' and saves them", async () => {
+    const { unmount } = await render(<ProfileScreen />);
+
+    expect(screen.getAllByText("Dopiero zaczynam").length).toBeGreaterThanOrEqual(1);
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Zaawansowany"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Jeszcze nie wiem"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Zapisz zmiany"));
+    });
+
+    expect(useOnboardingStore.getState().onboardingData).toMatchObject({
+      experienceLevel: "advanced",
+      muscleFocus: { mode: "undecided" },
+    });
 
     unmount();
   });
@@ -102,10 +133,12 @@ describe("ProfileScreen", () => {
       fireEvent.press(exportBtn);
     });
 
-    expect(Alert.alert).toHaveBeenCalledWith(
-      "Eksport danych",
-      expect.stringContaining("Twoje dane zostały przygotowane"),
-      expect.any(Array)
+    await waitFor(() =>
+      expect(Alert.alert).toHaveBeenCalledWith(
+        "Eksport danych",
+        expect.stringContaining("Twoje dane zostały przygotowane"),
+        expect.any(Array)
+      )
     );
 
     unmount();

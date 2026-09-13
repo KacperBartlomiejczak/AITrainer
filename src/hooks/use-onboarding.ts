@@ -4,24 +4,36 @@ import { OnboardingFormSchema } from "@/schemas/onboarding.schema";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import { useOnboardingFormStore } from "@/stores/onboarding-form.store";
 
-const TOTAL_STEPS = 4;
+/** Step order — index is the `currentStep` passed by each route screen. */
+const ONBOARDING_STEP_ROUTES = [
+  "/(onboarding)/step-name",
+  "/(onboarding)/step-experience",
+  "/(onboarding)/step-goal",
+  "/(onboarding)/step-muscle-groups",
+  "/(onboarding)/step-summary",
+] as const;
+
+const TOTAL_STEPS = ONBOARDING_STEP_ROUTES.length;
 
 /**
  * Hook for onboarding flow logic. Uses shared Zustand store
  * so form state persists across separate route screens.
  *
- * @param currentStep - The current step index (0-3), determined by route.
+ * @param currentStep - The current step index (0-4), determined by route.
  */
 export function useOnboarding(currentStep: number = 0) {
   const router = useRouter();
   const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
 
   const name = useOnboardingFormStore((s) => s.name);
+  const experienceLevel = useOnboardingFormStore((s) => s.experienceLevel);
   const fitnessGoal = useOnboardingFormStore((s) => s.fitnessGoal);
-  const focusMuscleGroups = useOnboardingFormStore((s) => s.focusMuscleGroups);
+  const muscleFocus = useOnboardingFormStore((s) => s.muscleFocus);
   const setName = useOnboardingFormStore((s) => s.setName);
+  const setExperienceLevel = useOnboardingFormStore((s) => s.setExperienceLevel);
   const setGoal = useOnboardingFormStore((s) => s.setGoal);
   const toggleMuscleGroup = useOnboardingFormStore((s) => s.toggleMuscleGroup);
+  const toggleUndecidedMuscleFocus = useOnboardingFormStore((s) => s.toggleUndecidedMuscleFocus);
   const resetForm = useOnboardingFormStore((s) => s.resetForm);
 
   const isStepValid = useMemo(() => {
@@ -29,31 +41,24 @@ export function useOnboarding(currentStep: number = 0) {
       case 0:
         return name.trim().length > 0;
       case 1:
-        return fitnessGoal !== null;
+        return experienceLevel !== null;
       case 2:
-        return focusMuscleGroups.length > 0;
+        return fitnessGoal !== null;
       case 3:
+        return muscleFocus !== null;
+      case 4:
         return true; // Summary step is always valid
       default:
         return false;
     }
-  }, [currentStep, name, fitnessGoal, focusMuscleGroups]);
+  }, [currentStep, name, experienceLevel, fitnessGoal, muscleFocus]);
 
   const nextStep = useCallback(() => {
     if (!isStepValid) return;
 
-    switch (currentStep) {
-      case 0:
-        router.push("/(onboarding)/step-goal");
-        break;
-      case 1:
-        router.push("/(onboarding)/step-muscle-groups");
-        break;
-      case 2:
-        router.push("/(onboarding)/step-summary");
-        break;
-      default:
-        break;
+    const nextRoute = ONBOARDING_STEP_ROUTES[currentStep + 1];
+    if (nextRoute) {
+      router.push(nextRoute);
     }
   }, [currentStep, isStepValid, router]);
 
@@ -64,15 +69,12 @@ export function useOnboarding(currentStep: number = 0) {
   }, [currentStep, router]);
 
   const submitOnboarding = useCallback(() => {
-    if (!fitnessGoal) return;
-
-    const formData = {
+    const result = OnboardingFormSchema.safeParse({
       name: name.trim(),
+      experienceLevel,
       fitnessGoal,
-      focusMuscleGroups,
-    };
-
-    const result = OnboardingFormSchema.safeParse(formData);
+      muscleFocus,
+    });
 
     if (result.success) {
       // RootLayout's onboarding guard redirects to home once the store flips
@@ -81,18 +83,21 @@ export function useOnboarding(currentStep: number = 0) {
     } else {
       console.warn("Onboarding validation failed:", result.error);
     }
-  }, [name, fitnessGoal, focusMuscleGroups, completeOnboarding, resetForm]);
+  }, [name, experienceLevel, fitnessGoal, muscleFocus, completeOnboarding, resetForm]);
 
   return {
     currentStep,
     totalSteps: TOTAL_STEPS,
     name,
+    experienceLevel,
     fitnessGoal,
-    focusMuscleGroups,
+    muscleFocus,
     isStepValid,
     setName,
+    setExperienceLevel,
     setGoal,
     toggleMuscleGroup,
+    toggleUndecidedMuscleFocus,
     nextStep,
     prevStep,
     submitOnboarding,

@@ -10,6 +10,7 @@ import {
   WeeklyProgressCard,
   QuickActionsGrid,
   RecentActivitySection,
+  FriendsWorkoutFeed,
 } from "@/components/home";
 import { PillNavbar } from "@/components/navigation";
 
@@ -79,8 +80,11 @@ export default function HomeScreen() {
             onSelectAction={handleQuickAction}
           />
 
-          {/* Previous workout recap with PRs */}
+          {/* Latest completed workout from the local database */}
           <RecentActivitySection activity={data.recentActivity} />
+
+          {/* Friends' workouts (mock data until the friends feature exists) */}
+          <FriendsWorkoutFeed items={data.friendsFeed} />
         </View>
       </ScrollView>
 

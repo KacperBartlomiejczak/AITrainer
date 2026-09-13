@@ -47,17 +47,21 @@ describe("user-profile-screen.schema", () => {
       expect(parsed.success).toBe(true);
     });
 
-    it("validates RoutinePhotoItemSchema", () => {
+    it("validates RoutinePhotoItemSchema (only workouts with a user photo)", () => {
       const item = {
-        id: "rp_01",
-        title: "Push Day - Siła",
-        subtitle: "Klatka, Barki, Triceps",
-        imageAssetKey: "0025",
-        routineId: "rtn_push_02",
-        durationMinutes: 55,
-        daysPerWeek: 4,
+        id: "wks_1",
+        title: "FBW A — Całe ciało",
+        subtitle: "Nogi, Klatka piersiowa",
+        photoUri: "file:///document/workout-photos/wks_1-1.jpg",
+        completedDate: "Wczoraj, 18:30",
+        durationMinutes: 45,
+        exercises: [
+          { id: "wse_1", name: "Przysiad ze sztangą", setsSummary: "3 serie × 8-10", completed: true },
+        ],
       };
       expect(RoutinePhotoItemSchema.safeParse(item).success).toBe(true);
+      expect(RoutinePhotoItemSchema.safeParse({ ...item, photoUri: null }).success).toBe(false);
+      expect(RoutinePhotoItemSchema.safeParse({ ...item, photoUri: "" }).success).toBe(false);
       expect(RoutinePhotoItemSchema.safeParse({ id: "" }).success).toBe(false);
     });
 
@@ -72,6 +76,9 @@ describe("user-profile-screen.schema", () => {
         levelLabel: "Średni",
       };
       expect(UserRoutineCardSchema.safeParse(card).success).toBe(true);
+      expect(UserRoutineCardSchema.safeParse({ ...card, daysPerWeek: 7 }).success).toBe(true);
+      expect(UserRoutineCardSchema.safeParse({ ...card, daysPerWeek: 8 }).success).toBe(false);
+      expect(UserRoutineCardSchema.safeParse({ ...card, daysPerWeek: 0 }).success).toBe(false);
       expect(UserRoutineCardSchema.safeParse({ id: "" }).success).toBe(false);
     });
 
@@ -95,22 +102,16 @@ describe("user-profile-screen.schema", () => {
       expect(MonthlyIntensitySchema.safeParse(month).success).toBe(true);
     });
 
-    it("validates CompletedWorkoutDetailSchema with and without photo and with achievements", () => {
+    it("validates CompletedWorkoutDetailSchema with and without the optional photo", () => {
       const workoutWithPhoto = {
-        id: "cw_01",
-        title: "Klatka & Triceps (Hipertrofia)",
+        id: "wks_1",
+        title: "FBW A — Całe ciało",
         completedDate: "Wczoraj, 18:30",
         durationMinutes: 58,
-        totalVolumeKg: 6450,
-        imageAssetKey: "0025",
+        completedExerciseCount: 1,
+        photoUri: "file:///document/workout-photos/wks_1-1.jpg",
         exercises: [
-          {
-            id: "e1",
-            name: "Wyciskanie sztangi leżąc",
-            setsSummary: "4 serie: 80kg x 10, 90kg x 8, 95kg x 6, 100kg x 4",
-            isPersonalRecord: true,
-            recordNote: "Nowy rekord: 100 kg!",
-          },
+          { id: "e1", name: "Wyciskanie sztangi leżąc", setsSummary: "3 serie × 8-10", completed: true },
         ],
         achievements: [
           {
@@ -125,22 +126,43 @@ describe("user-profile-screen.schema", () => {
       expect(CompletedWorkoutDetailSchema.safeParse(workoutWithPhoto).success).toBe(true);
 
       const workoutWithoutPhoto = {
-        id: "cw_02",
-        title: "Kondycja & Core",
+        id: "wks_2",
+        title: "FBW B — Całe ciało",
         completedDate: "4 dni temu",
         durationMinutes: 35,
-        totalVolumeKg: 0,
-        imageAssetKey: "",
-        exercises: [
-          {
-            id: "e2",
-            name: "Plank & Brzuszki",
-            setsSummary: "3 serie po 60s",
-            isPersonalRecord: false,
-          },
-        ],
+        completedExerciseCount: 0,
+        photoUri: null,
+        exercises: [{ id: "e2", name: "Plank (deska)", setsSummary: "Pominięte", completed: false }],
       };
-      expect(CompletedWorkoutDetailSchema.safeParse(workoutWithoutPhoto).success).toBe(true);
+      const parsed = CompletedWorkoutDetailSchema.safeParse(workoutWithoutPhoto);
+      expect(parsed.success).toBe(true);
+      expect(parsed.data?.achievements).toEqual([]);
+      expect(CompletedWorkoutDetailSchema.safeParse({ ...workoutWithoutPhoto, exercises: [] }).success).toBe(false);
+    });
+
+    it("accepts an empty profile for a new user without workouts", () => {
+      const result = UserProfileScreenDataSchema.safeParse({
+        stats: {
+          displayName: "Kacper",
+          fitnessGoalLabel: "Budowa sylwetki",
+          streakDays: 0,
+          benchPressMaxKg: 0,
+          strengthLeague: STRENGTH_LEAGUES.bronze,
+          totalWorkoutsCompleted: 0,
+        },
+        routinePhotos: [],
+        monthlyIntensity: {
+          monthLabel: "Wrzesień 2026",
+          totalHours: 0,
+          targetTotalHours: 24,
+          weeks: [
+            { id: "w1", weekLabel: "7 wrz – 13 wrz", hours: 0, workoutCount: 0, targetHours: 6, isCurrentWeek: true },
+          ],
+        },
+        routines: [],
+        recentWorkouts: [],
+      });
+      expect(result.success).toBe(true);
     });
 
     it("validates complete UserProfileScreenDataSchema", () => {
@@ -155,13 +177,15 @@ describe("user-profile-screen.schema", () => {
         },
         routinePhotos: [
           {
-            id: "rp_01",
-            title: "Push Day",
+            id: "wks_1",
+            title: "Trening Klatki",
             subtitle: "Klatka & Barki",
-            imageAssetKey: "0025",
-            routineId: "rtn_01",
-            durationMinutes: 55,
-            daysPerWeek: 4,
+            photoUri: "file:///document/workout-photos/wks_1-1.jpg",
+            completedDate: "Wczoraj, 18:30",
+            durationMinutes: 58,
+            exercises: [
+              { id: "e1", name: "Wyciskanie sztangi", setsSummary: "4 serie × 8", completed: true },
+            ],
           },
         ],
         monthlyIntensity: {
@@ -192,19 +216,14 @@ describe("user-profile-screen.schema", () => {
         ],
         recentWorkouts: [
           {
-            id: "cw_01",
+            id: "wks_1",
             title: "Trening Klatki",
             completedDate: "Wczoraj, 18:30",
             durationMinutes: 58,
-            totalVolumeKg: 6450,
-            imageAssetKey: "0025",
+            completedExerciseCount: 1,
+            photoUri: "file:///document/workout-photos/wks_1-1.jpg",
             exercises: [
-              {
-                id: "e1",
-                name: "Wyciskanie sztangi",
-                setsSummary: "4 serie do 100kg",
-                isPersonalRecord: true,
-              },
+              { id: "e1", name: "Wyciskanie sztangi", setsSummary: "4 serie × 8", completed: true },
             ],
           },
         ],

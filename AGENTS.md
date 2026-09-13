@@ -8,8 +8,11 @@ AI trainer is powered AI trainer for people who staring their journey with the g
 
 # Rules
 
-- Mobile client NEVER connects to Neon/Drizzle directly. All DB access goes
-  through [API layer — specify: Expo API Routes / separate backend].
+- Mobile client NEVER connects to the remote Neon/Drizzle database directly.
+  All access to remote data goes through [API layer — specify: Expo API
+  Routes / separate backend]. Local, on-device persistence via Expo SQLite
+  and Drizzle repositories (e.g. `src/db/repositories/*`) is allowed and is
+  how app-local data (onboarding, workouts, routines) is stored.
 - Neon connection string and Gemini/AI API key live only server-side,
   never in EXPO_PUBLIC_* env vars (those get bundled into the client binary)
 - If something is unclear or you need more details about feature or component I want you to ask me question about it
@@ -58,7 +61,7 @@ AI trainer is powered AI trainer for people who staring their journey with the g
 - React native
 - Nativewind
 - Typescript
-- Neon.tech
+- Expo SQLite
 - Drizzle orm
 - Clerk
 - Expo
