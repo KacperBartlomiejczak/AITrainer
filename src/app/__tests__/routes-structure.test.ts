@@ -27,7 +27,7 @@ describe("app route structure", () => {
   const routeKeys = requireContext(APP_DIR, true, ROUTE_FILE_PATTERN).keys().filter(isRouteFile);
 
   it("discovers route files in the app directory", () => {
-    expect(routeKeys).toContain("./index.tsx");
+    expect(routeKeys).toContain("./(tabs)/index.tsx");
   });
 
   it("maps every route file to a unique URL (no group/index collisions)", () => {

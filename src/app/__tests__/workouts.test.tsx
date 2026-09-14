@@ -1,6 +1,6 @@
 import React from "react";
 import { render, fireEvent, act, screen } from "@testing-library/react-native";
-import WorkoutsScreen from "../workouts";
+import WorkoutsScreen from "../(tabs)/workouts";
 import { useRouter } from "expo-router";
 import { resetInMemoryDatabase } from "@/db/testing/in-memory-client";
 
@@ -15,7 +15,7 @@ describe("WorkoutsScreen", () => {
     resetInMemoryDatabase();
   });
 
-  it("renders workouts screen with routines from the database and pill navbar", async () => {
+  it("renders workouts screen with routines from the database", async () => {
     const router = useRouter();
     const { unmount } = await render(<WorkoutsScreen />);
 
@@ -24,12 +24,17 @@ describe("WorkoutsScreen", () => {
     expect(screen.getByText("Gotowe Rutyny Treningowe")).toBeTruthy();
     expect(await screen.findByText("FBW A — Całe ciało")).toBeTruthy();
     expect(screen.getByText("FBW B — Całe ciało")).toBeTruthy();
-    expect(screen.getByTestId("pill-navbar")).toBeTruthy();
 
     await act(async () => {
       fireEvent.press(screen.getByTestId("show-all-exercises-button"));
     });
     expect(router.push).toHaveBeenCalledWith("/exercises");
+
+    expect(screen.getByText("Stwórz nową rutynę")).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("start-empty-workout-button"));
+    });
+    expect(router.push).toHaveBeenCalledWith("/workout-session");
 
     unmount();
   });

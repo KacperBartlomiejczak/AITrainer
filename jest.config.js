@@ -13,7 +13,9 @@ module.exports = {
   // @react-native/jest-preset/jest/setup.js (Flow/ESM, missing react-native/setup-env in RN 0.86)
   setupFiles: ["<rootDir>/src/__mocks__/jest.rn-setup.js"],
   setupFilesAfterEnv: ["<rootDir>/src/__mocks__/jest.setup.js"],
-  testPathIgnorePatterns: ["/node_modules/", "/example/"],
+  testPathIgnorePatterns: ["/node_modules/", "/example/", "<rootDir>/.claude/worktrees/"],
+  modulePathIgnorePatterns: ["<rootDir>/.claude/worktrees/"],
+  watchPathIgnorePatterns: ["<rootDir>/.claude/worktrees/"],
   // Increase timeout to handle render-heavy component tests in full suite runs
   testTimeout: 30000,
   // Prevent hanging async operations (e.g. animation timers) from blocking the runner

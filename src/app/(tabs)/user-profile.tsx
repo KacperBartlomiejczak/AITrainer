@@ -11,7 +11,6 @@ import {
   RecentCompletedWorkouts,
   PastWorkoutModal,
 } from "@/components/user-profile";
-import { PillNavbar } from "@/components/navigation";
 import { WorkoutPhotoSourceSheet } from "@/components/workout-photo";
 
 export default function UserProfileScreen() {
@@ -103,9 +102,6 @@ export default function UserProfileScreen() {
         onRemovePhoto={() => void photoSheet.removePhoto()}
         onDismiss={photoSheet.dismiss}
       />
-
-      {/* Floating Pill Navigation */}
-      <PillNavbar activeTab="profile" />
     </View>
   );
 }

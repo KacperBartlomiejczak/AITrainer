@@ -26,9 +26,10 @@ const entry: WorkoutHistoryEntry = {
   createdAt: new Date(2026, 8, 12, 18, 30),
   photoUri: "file:///document/workout-photos/wks_1-1.jpg",
   exercises: [
-    { id: "wse_1", name: "Przysiad", targetMuscle: "Nogi", sets: 3, targetReps: "8-10", completed: true },
-    { id: "wse_2", name: "Wyciskanie", targetMuscle: "Klatka", sets: 1, targetReps: "10", completed: true },
-    { id: "wse_3", name: "Plank", targetMuscle: "Brzuch", sets: 5, targetReps: "45 sek", completed: false },
+    // Routine workout: exercises are only ticked, no sets are logged
+    { id: "wse_1", catalogExerciseId: null, name: "Przysiad", targetMuscle: "Nogi", sets: 3, targetReps: "8-10", completed: true, loggedSets: [] },
+    { id: "wse_2", catalogExerciseId: null, name: "Wyciskanie", targetMuscle: "Klatka", sets: 1, targetReps: "10", completed: true, loggedSets: [] },
+    { id: "wse_3", catalogExerciseId: null, name: "Plank", targetMuscle: "Brzuch", sets: 5, targetReps: "45 sek", completed: false, loggedSets: [] },
   ],
 };
 
@@ -104,5 +105,127 @@ describe("toWorkoutSessionExport", () => {
     expect(exported.hasPhoto).toBe(true);
     expect(exported.startedAt).toBe(entry.startedAt.toISOString());
     expect(JSON.stringify(exported)).not.toContain("wks_1-1.jpg");
+  });
+});
+
+describe("logged workouts (empty workout with sets)", () => {
+  const loggedEntry: WorkoutHistoryEntry = {
+    ...entry,
+    routineId: null,
+    title: "Push day",
+    exercises: [
+      {
+        id: "wse_10",
+        catalogExerciseId: "0025",
+        name: "Wyciskanie sztangi",
+        targetMuscle: "Klatka piersiowa",
+        sets: 3,
+        targetReps: "5–10",
+        completed: true,
+        loggedSets: [
+          { id: "wss_1", weightKg: 40, reps: 10, tag: "warmup", isOneRepMaxRecord: false, isBestSetVolumeRecord: false, isMaxRepsRecord: false },
+          { id: "wss_2", weightKg: 82.5, reps: 5, tag: null, isOneRepMaxRecord: true, isBestSetVolumeRecord: false, isMaxRepsRecord: false },
+          { id: "wss_3", weightKg: 70, reps: 8, tag: "drop_set", isOneRepMaxRecord: false, isBestSetVolumeRecord: true, isMaxRepsRecord: false },
+        ],
+      },
+      {
+        id: "wse_11",
+        catalogExerciseId: "0033",
+        name: "Pompki",
+        targetMuscle: "Klatka piersiowa",
+        sets: 1,
+        targetReps: "25",
+        completed: true,
+        loggedSets: [{ id: "wss_4", weightKg: 0, reps: 25, tag: null, isOneRepMaxRecord: false, isBestSetVolumeRecord: false, isMaxRepsRecord: true }],
+      },
+    ],
+  };
+
+  it("summarizes logged sets with the heaviest working set and describes every record type", () => {
+    const detail = toCompletedWorkoutDetail(loggedEntry, now);
+
+    expect(CompletedWorkoutDetailSchema.safeParse(detail).success).toBe(true);
+    expect(detail.exercises).toEqual([
+      {
+        id: "wse_10",
+        name: "Wyciskanie sztangi",
+        setsSummary: "3 serie • maks. 82,5 kg × 5",
+        completed: true,
+        isPersonalRecord: true,
+        // 1RM of 82,5 kg × 5 ≈ 96,25 kg → rounded to 0,5 kg
+        recordNote: "Max ≈ 96,5 kg • Rekordowa seria: 560 kg",
+      },
+      {
+        id: "wse_11",
+        name: "Pompki",
+        setsSummary: "1 seria • maks. 25 powt.",
+        completed: true,
+        isPersonalRecord: true,
+        recordNote: "Najwięcej powtórzeń: 25",
+      },
+    ]);
+  });
+
+  it("lists each personal record and the workout volume (without warm-ups) as achievements", () => {
+    const detail = toCompletedWorkoutDetail(loggedEntry, now);
+
+    expect(detail.achievements).toEqual([
+      {
+        id: "pr-one_rep_max-wse_10",
+        title: "Nowy max – Wyciskanie sztangi",
+        description: "≈ 96,5 kg (82,5 kg × 5)",
+        icon: "🏆",
+        badgeColor: "#F59E0B",
+      },
+      {
+        id: "pr-best_set_volume-wse_10",
+        title: "Rekordowa seria – Wyciskanie sztangi",
+        description: "560 kg (70 kg × 8)",
+        icon: "🔥",
+        badgeColor: "#22C55E",
+      },
+      {
+        id: "pr-max_reps-wse_11",
+        title: "Najwięcej powtórzeń – Pompki",
+        description: "25 powt.",
+        icon: "💪",
+        badgeColor: "#38BDF8",
+      },
+      {
+        id: "volume",
+        title: "Tonaż treningu",
+        description: "972,5 kg",
+        icon: "🏋️",
+        badgeColor: "#007AFF",
+      },
+    ]);
+  });
+
+  it("shows the exact weight for a one-rep max set", () => {
+    const singleRep: WorkoutHistoryEntry = {
+      ...loggedEntry,
+      exercises: [
+        {
+          ...loggedEntry.exercises[0]!,
+          loggedSets: [{ id: "wss_9", weightKg: 100, reps: 1, tag: null, isOneRepMaxRecord: true, isBestSetVolumeRecord: false, isMaxRepsRecord: false }],
+        },
+      ],
+    };
+    const detail = toCompletedWorkoutDetail(singleRep, now);
+
+    expect(detail.exercises[0]?.recordNote).toBe("Max: 100 kg");
+    expect(detail.achievements[0]?.description).toBe("100 kg (1 powt.)");
+  });
+
+  it("exports logged sets without internal ids", () => {
+    const exported = toWorkoutSessionExport(loggedEntry);
+
+    expect(WorkoutSessionExportSchema.safeParse(exported).success).toBe(true);
+    expect(exported.exercises[0]?.loggedSets).toEqual([
+      { weightKg: 40, reps: 10, tag: "warmup", isOneRepMaxRecord: false, isBestSetVolumeRecord: false, isMaxRepsRecord: false },
+      { weightKg: 82.5, reps: 5, tag: null, isOneRepMaxRecord: true, isBestSetVolumeRecord: false, isMaxRepsRecord: false },
+      { weightKg: 70, reps: 8, tag: "drop_set", isOneRepMaxRecord: false, isBestSetVolumeRecord: true, isMaxRepsRecord: false },
+    ]);
+    expect(JSON.stringify(exported)).not.toContain("wss_");
   });
 });

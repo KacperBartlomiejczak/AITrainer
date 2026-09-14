@@ -1,7 +1,9 @@
+import { createOnboardingRepository } from "../repositories/onboarding.repository";
 import { createRoutineRepository } from "../repositories/routine.repository";
 import { BUILTIN_ROUTINES } from "../seeds/builtin-routines";
 import { createTestDatabase, type TestDatabase } from "../testing/create-test-database";
-import { NewRoutineSchema, type NewRoutine } from "@/schemas/workout-history.schema";
+import { LOCAL_USER_ID } from "@/schemas/database.schema";
+import { NewRoutineSchema, NewUserRoutineSchema, type NewRoutine } from "@/schemas/workout-history.schema";
 
 const customRoutine: NewRoutine = {
   id: "rtn_custom",
@@ -91,6 +93,67 @@ describe("createRoutineRepository", () => {
     const repository = createRoutineRepository(testDb.db, { now });
     await expect(repository.seed([{ ...customRoutine, daysPerWeek: 9 }])).rejects.toThrow();
     expect(await repository.list()).toEqual([]);
+  });
+
+  it("creates a routine owned by the repository user and lists it after built-in ones", async () => {
+    await createOnboardingRepository(testDb.db, { now }).save({
+      name: "Kacper",
+      experienceLevel: "beginner",
+      fitnessGoal: "strength",
+      muscleFocus: { mode: "undecided" },
+    });
+    const repository = createRoutineRepository(testDb.db, { now });
+    await repository.seed(BUILTIN_ROUTINES);
+
+    // Zod strips `userId`: the owner always comes from the repository
+    const definition = NewUserRoutineSchema.parse(customRoutine);
+    const created = await repository.create(definition);
+
+    expect(created).toMatchObject({ id: "rtn_custom", userId: LOCAL_USER_ID, createdAt: now() });
+    expect(created.exercises.map((exercise) => exercise.name)).toEqual(["Pompki", "Przysiad"]);
+    const routines = await repository.list();
+    expect(routines.map((routine) => routine.id)).toContain("rtn_custom");
+    await expect(repository.getById("rtn_custom")).resolves.toEqual(created);
+  });
+
+  it("rejects an invalid user routine without writing anything", async () => {
+    const repository = createRoutineRepository(testDb.db, { now });
+    const definition = NewUserRoutineSchema.parse(customRoutine);
+    await expect(repository.create({ ...definition, exercises: [] })).rejects.toThrow();
+    await expect(repository.list()).resolves.toEqual([]);
+  });
+
+  it("deletes a routine owned by the user, cascading its exercises", async () => {
+    await createOnboardingRepository(testDb.db, { now }).save({
+      name: "Kacper",
+      experienceLevel: "beginner",
+      fitnessGoal: "strength",
+      muscleFocus: { mode: "undecided" },
+    });
+    const repository = createRoutineRepository(testDb.db, { now });
+    const definition = NewUserRoutineSchema.parse(customRoutine);
+    await repository.create(definition);
+
+    await expect(repository.delete("rtn_custom")).resolves.toBe(true);
+    await expect(repository.getById("rtn_custom")).resolves.toBeNull();
+    const { count } = testDb.sqlite.prepare("SELECT COUNT(*) AS count FROM routine_exercises WHERE routine_id = ?").get("rtn_custom") as {
+      count: number;
+    };
+    expect(count).toBe(0);
+  });
+
+  it("never deletes a built-in routine", async () => {
+    const repository = createRoutineRepository(testDb.db, { now });
+    await repository.seed(BUILTIN_ROUTINES);
+    const builtinId = BUILTIN_ROUTINES[0]!.id;
+
+    await expect(repository.delete(builtinId)).resolves.toBe(false);
+    await expect(repository.getById(builtinId)).resolves.not.toBeNull();
+  });
+
+  it("no-ops when deleting an unknown routine id", async () => {
+    const repository = createRoutineRepository(testDb.db, { now });
+    await expect(repository.delete("missing")).resolves.toBe(false);
   });
 
   it("skips corrupted routine rows instead of crashing", async () => {

@@ -3,10 +3,12 @@ import { z } from "zod";
 import { LOCAL_USER_ID, type UserId } from "@/schemas/database.schema";
 import {
   NewRoutineSchema,
+  NewUserRoutineSchema,
   RoutineExerciseRowSchema,
   RoutineRowSchema,
   RoutineSchema,
   type NewRoutine,
+  type NewUserRoutine,
   type Routine,
   type RoutineId,
 } from "@/schemas/workout-history.schema";
@@ -20,8 +22,15 @@ export interface RoutineRepository {
   /** Built-in routines plus the user's own, oldest first. Corrupted rows are skipped. */
   list: () => Promise<Routine[]>;
   getById: (id: RoutineId) => Promise<Routine | null>;
+  /** Stores a routine owned by the user (e.g. saved from a finished workout). Rejects invalid data. */
+  create: (routine: NewUserRoutine) => Promise<Routine>;
   /** Inserts routines that do not exist yet (safe to call on every app start). Rejects invalid definitions. */
   seed: (definitions: readonly NewRoutine[]) => Promise<void>;
+  /**
+   * Deletes a routine owned by the user (its exercises cascade). Built-in routines
+   * (`userId === null`) and unknown ids are silently ignored — returns whether a row was removed.
+   */
+  delete: (id: RoutineId) => Promise<boolean>;
 }
 
 export interface RoutineRepositoryOptions {
@@ -78,6 +87,36 @@ export function createRoutineRepository(
     async getById(id) {
       const [routine] = readRoutines([id]);
       return routine ?? null;
+    },
+
+    async create(input) {
+      const timestamp = now();
+      const { exercises, ...routine } = parseOrThrow(NewUserRoutineSchema, input, "user routine");
+      const routineRow = parseOrThrow(
+        RoutineRowSchema,
+        { ...routine, userId, createdAt: timestamp, updatedAt: timestamp },
+        "user routine row",
+      );
+      const exerciseRows = parseOrThrow(
+        RoutineExerciseRowListSchema,
+        exercises.map((exercise, position) => ({ ...exercise, routineId: routineRow.id, position })),
+        "user routine exercise rows",
+      );
+
+      db.transaction((tx) => {
+        tx.insert(routines).values(routineRow).run();
+        tx.insert(routineExercises).values(exerciseRows).run();
+      });
+
+      return parseOrThrow(RoutineSchema, { ...routineRow, exercises: exerciseRows }, "user routine");
+    },
+
+    async delete(id) {
+      const ownedByUser = and(eq(routines.id, id), eq(routines.userId, userId));
+      const [existing] = db.select({ id: routines.id }).from(routines).where(ownedByUser).all();
+      if (!existing) return false;
+      db.delete(routines).where(ownedByUser).run();
+      return true;
     },
 
     async seed(definitions) {

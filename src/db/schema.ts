@@ -2,6 +2,7 @@ import {
   index,
   integer,
   primaryKey,
+  real,
   sqliteTable,
   text,
   uniqueIndex,
@@ -14,6 +15,7 @@ import {
   MuscleGroupSchema,
 } from "../schemas/onboarding.schema";
 import { RoutineLevelSchema } from "../schemas/routine.schema";
+import { SetTagSchema } from "../schemas/workout-history.schema";
 
 /** Zod enum options as the non-empty tuple Drizzle requires for `text({ enum })`. */
 function toEnumValues<T extends string>(values: readonly T[]): [T, ...T[]] {
@@ -116,6 +118,8 @@ export const workoutSessionExercises = sqliteTable(
       .notNull()
       .references(() => workoutSessions.id, { onDelete: "cascade" }),
     position: integer("position").notNull(),
+    // Catalog exercise the sets belong to (used for personal records); null for routine workouts
+    catalogExerciseId: text("catalog_exercise_id"),
     name: text("name").notNull(),
     targetMuscle: text("target_muscle").notNull(),
     sets: integer("sets").notNull(),
@@ -124,5 +128,28 @@ export const workoutSessionExercises = sqliteTable(
   },
   (table) => [
     uniqueIndex("workout_session_exercises_session_position_idx").on(table.sessionId, table.position),
+  ],
+);
+
+// Only completed sets of a logged workout are stored
+export const workoutSessionSets = sqliteTable(
+  "workout_session_sets",
+  {
+    id: text("id").primaryKey(),
+    sessionExerciseId: text("session_exercise_id")
+      .notNull()
+      .references(() => workoutSessionExercises.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    weightKg: real("weight_kg").notNull(),
+    reps: integer("reps").notNull(),
+    // null = regular working set
+    tag: text("tag", { enum: toEnumValues(SetTagSchema.options) }),
+    // Snapshots of the records the set beat when the workout was saved
+    isOneRepMaxRecord: integer("is_one_rep_max_record", { mode: "boolean" }).notNull().default(false),
+    isBestSetVolumeRecord: integer("is_best_set_volume_record", { mode: "boolean" }).notNull().default(false),
+    isMaxRepsRecord: integer("is_max_reps_record", { mode: "boolean" }).notNull().default(false),
+  },
+  (table) => [
+    uniqueIndex("workout_session_sets_exercise_position_idx").on(table.sessionExerciseId, table.position),
   ],
 );

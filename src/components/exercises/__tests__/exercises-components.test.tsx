@@ -124,4 +124,25 @@ describe("Exercise Catalog Components", () => {
 
     unmount();
   });
+
+  it("shows an optional action in ExercisePreviewModal (e.g. adding the exercise to a workout)", async () => {
+    const onAction = jest.fn();
+    const { getByTestId, queryByText, unmount } = await render(
+      <ExercisePreviewModal
+        exercise={MOCK_EXERCISE}
+        visible={true}
+        onClose={jest.fn()}
+        actionLabel="Dodaj do treningu"
+        onAction={onAction}
+      />
+    );
+
+    expect(queryByText("Zamknij podgląd")).toBeNull();
+    await act(async () => {
+      fireEvent.press(getByTestId("exercise-preview-action"));
+    });
+    expect(onAction).toHaveBeenCalledWith(MOCK_EXERCISE);
+
+    unmount();
+  });
 });

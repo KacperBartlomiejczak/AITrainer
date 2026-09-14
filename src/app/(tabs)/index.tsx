@@ -12,7 +12,6 @@ import {
   RecentActivitySection,
   FriendsWorkoutFeed,
 } from "@/components/home";
-import { PillNavbar } from "@/components/navigation";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -29,7 +28,7 @@ export default function HomeScreen() {
   };
 
   const handleAskCoach = () => {
-    router.push("/ai-coach" as never);
+    router.push("/ai-mentor" as never);
   };
 
   const handleOpenProfile = () => {
@@ -87,9 +86,6 @@ export default function HomeScreen() {
           <FriendsWorkoutFeed items={data.friendsFeed} />
         </View>
       </ScrollView>
-
-      {/* Floating Pill Navigation */}
-      <PillNavbar activeTab="home" />
     </View>
   );
 }

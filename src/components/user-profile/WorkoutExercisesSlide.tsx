@@ -63,6 +63,11 @@ export function WorkoutExercisesSlide({
             <Text className={`text-xs font-semibold ${ex.completed ? "text-[#38BDF8]" : "text-[#71717A]"}`}>
               {ex.setsSummary}
             </Text>
+            {ex.recordNote ? (
+              <Text className="text-[11px] font-semibold text-[#F59E0B]" numberOfLines={2}>
+                {ex.recordNote}
+              </Text>
+            ) : null}
           </View>
         ))}
       </View>

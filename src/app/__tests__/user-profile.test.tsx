@@ -1,6 +1,6 @@
 import React from "react";
 import { render, fireEvent, act, screen } from "@testing-library/react-native";
-import UserProfileScreen from "../user-profile";
+import UserProfileScreen from "../(tabs)/user-profile";
 import { useRouter } from "expo-router";
 import { useOnboardingStore } from "@/stores/onboarding.store";
 import { resetInMemoryDatabase, saveLocalProfile } from "@/db/testing/in-memory-client";
@@ -64,7 +64,6 @@ describe("UserProfileScreen", () => {
     // 5. Previous workouts, newest first, each can get a photo
     expect(screen.getByText("⏱️ Poprzednie Treningi (2)")).toBeTruthy();
     expect(screen.getByTestId(`manage-photo-${withoutPhoto.id}`)).toBeTruthy();
-    expect(screen.getByTestId("pill-navbar")).toBeTruthy();
 
     // Photo opens the workout details
     await act(async () => {

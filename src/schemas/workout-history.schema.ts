@@ -16,6 +16,23 @@ const LabelSchema = z.string().trim().min(1).max(120);
 
 export const RoutineIdSchema = EntityIdSchema;
 export const WorkoutSessionIdSchema = EntityIdSchema;
+/** Id of an exercise in the built-in exercise catalog (e.g. "0025") */
+export const CatalogExerciseIdSchema = EntityIdSchema;
+
+// ── Logged sets ───────────────────────────────────────────────
+export const MAX_SETS_PER_EXERCISE = 20;
+
+/** R = warm-up, D = drop set, NU = failed; null = a regular working set */
+export const SetTagSchema = z.enum(["warmup", "drop_set", "failed"]);
+/** 0 kg = bodyweight exercise */
+export const WeightKgSchema = z.number().nonnegative().max(1000);
+export const RepsSchema = z.number().int().min(1).max(500);
+
+/**
+ * one_rep_max = estimated 1RM (weighted sets), best_set_volume = kg × reps of one set (weighted sets),
+ * max_reps = most reps (bodyweight sets, 0 kg)
+ */
+export const PersonalRecordTypeSchema = z.enum(["one_rep_max", "best_set_volume", "max_reps"]);
 
 /**
  * File name of a workout photo inside the app's photo directory.
@@ -47,7 +64,7 @@ export const RoutineExerciseRowSchema = z.object({
   position: PositionSchema,
   name: LabelSchema,
   targetMuscle: LabelSchema,
-  sets: z.number().int().positive().max(20),
+  sets: z.number().int().positive().max(MAX_SETS_PER_EXERCISE),
   targetReps: z.string().trim().min(1).max(40),
   restSeconds: z.number().int().nonnegative().max(900),
 });
@@ -69,11 +86,27 @@ export const WorkoutSessionExerciseRowSchema = z.object({
   id: EntityIdSchema,
   sessionId: WorkoutSessionIdSchema,
   position: PositionSchema,
+  /** null = exercise from a routine or a session logged before sets were tracked */
+  catalogExerciseId: CatalogExerciseIdSchema.nullable(),
   name: LabelSchema,
   targetMuscle: LabelSchema,
   sets: RoutineExerciseRowSchema.shape.sets,
   targetReps: RoutineExerciseRowSchema.shape.targetReps,
   completed: z.boolean(),
+});
+
+/** Only completed sets are stored. */
+export const WorkoutSessionSetRowSchema = z.object({
+  id: EntityIdSchema,
+  sessionExerciseId: EntityIdSchema,
+  position: PositionSchema,
+  weightKg: WeightKgSchema,
+  reps: RepsSchema,
+  tag: SetTagSchema.nullable(),
+  // Snapshots: the set beat the user's best of that record type at the moment the workout was saved
+  isOneRepMaxRecord: z.boolean(),
+  isBestSetVolumeRecord: z.boolean(),
+  isMaxRepsRecord: z.boolean(),
 });
 
 // ── Domain ────────────────────────────────────────────────────
@@ -88,9 +121,28 @@ export const NewRoutineSchema = RoutineRowSchema.omit({ createdAt: true, updated
   exercises: z.array(RoutineExerciseSchema).min(1),
 });
 
+/** A routine the user created (e.g. from a finished workout); the owner is set by the repository. */
+export const NewUserRoutineSchema = NewRoutineSchema.omit({ userId: true });
+
+export const WorkoutSessionSetSchema = WorkoutSessionSetRowSchema.omit({
+  sessionExerciseId: true,
+  position: true,
+});
+
 const WorkoutSessionExerciseSchema = WorkoutSessionExerciseRowSchema.omit({
   sessionId: true,
   position: true,
+}).extend({
+  loggedSets: z.array(WorkoutSessionSetSchema).max(MAX_SETS_PER_EXERCISE),
+});
+
+export const NewWorkoutSessionSetSchema = WorkoutSessionSetRowSchema.pick({
+  weightKg: true,
+  reps: true,
+  tag: true,
+  isOneRepMaxRecord: true,
+  isBestSetVolumeRecord: true,
+  isMaxRepsRecord: true,
 });
 
 export const WorkoutSessionSchema = WorkoutSessionRowSchema.extend({
@@ -105,7 +157,19 @@ export const NewWorkoutSessionSchema = z
     startedAt: z.date(),
     completedAt: z.date(),
     exercises: z
-      .array(WorkoutSessionExerciseRowSchema.pick({ name: true, targetMuscle: true, sets: true, targetReps: true, completed: true }))
+      .array(
+        WorkoutSessionExerciseRowSchema.pick({
+          name: true,
+          targetMuscle: true,
+          sets: true,
+          targetReps: true,
+          completed: true,
+        }).extend({
+          // Optional: routine workouts only tick exercises, the live workout logs sets
+          catalogExerciseId: CatalogExerciseIdSchema.nullable().optional(),
+          loggedSets: z.array(NewWorkoutSessionSetSchema).max(MAX_SETS_PER_EXERCISE).optional(),
+        }),
+      )
       .min(1),
   })
   .refine((session) => session.completedAt.getTime() >= session.startedAt.getTime(), {
@@ -115,7 +179,12 @@ export const NewWorkoutSessionSchema = z
   .refine((session) => session.exercises.some((exercise) => exercise.completed), {
     message: "Odhacz przynajmniej jedno ćwiczenie, aby zapisać trening",
     path: ["exercises"],
-  });
+  })
+  .refine(
+    (session) =>
+      session.exercises.every((exercise) => exercise.completed || (exercise.loggedSets ?? []).length === 0),
+    { message: "Serie można zapisać tylko dla ukończonego ćwiczenia", path: ["exercises"] },
+  );
 
 /** A stored session plus the resolved local URI of its photo (null = no photo or file missing). */
 export const WorkoutHistoryEntrySchema = WorkoutSessionSchema.extend({
@@ -144,7 +213,11 @@ export const WorkoutSessionExportSchema = z.object({
   completedAt: z.iso.datetime(),
   durationSeconds: z.number().int().nonnegative(),
   hasPhoto: z.boolean(),
-  exercises: z.array(WorkoutSessionExerciseSchema.omit({ id: true })),
+  exercises: z.array(
+    WorkoutSessionExerciseSchema.omit({ id: true, catalogExerciseId: true, loggedSets: true }).extend({
+      loggedSets: z.array(WorkoutSessionSetSchema.omit({ id: true })).default([]),
+    }),
+  ),
 });
 
 // ── Exported Types ────────────────────────────────────────────
@@ -152,12 +225,19 @@ export type RoutineId = z.infer<typeof RoutineIdSchema>;
 export type WorkoutSessionId = z.infer<typeof WorkoutSessionIdSchema>;
 export type WorkoutPhotoFileName = z.infer<typeof WorkoutPhotoFileNameSchema>;
 export type WorkoutPhotoSource = z.infer<typeof WorkoutPhotoSourceSchema>;
+export type CatalogExerciseId = z.infer<typeof CatalogExerciseIdSchema>;
+export type SetTag = z.infer<typeof SetTagSchema>;
+export type PersonalRecordType = z.infer<typeof PersonalRecordTypeSchema>;
+export type WorkoutSessionSetRow = z.infer<typeof WorkoutSessionSetRowSchema>;
+export type WorkoutSessionSet = z.infer<typeof WorkoutSessionSetSchema>;
+export type NewWorkoutSessionSet = z.infer<typeof NewWorkoutSessionSetSchema>;
 export type RoutineRow = z.infer<typeof RoutineRowSchema>;
 export type RoutineExerciseRow = z.infer<typeof RoutineExerciseRowSchema>;
 export type WorkoutSessionRow = z.infer<typeof WorkoutSessionRowSchema>;
 export type WorkoutSessionExerciseRow = z.infer<typeof WorkoutSessionExerciseRowSchema>;
 export type Routine = z.infer<typeof RoutineSchema>;
 export type NewRoutine = z.infer<typeof NewRoutineSchema>;
+export type NewUserRoutine = z.infer<typeof NewUserRoutineSchema>;
 export type WorkoutSession = z.infer<typeof WorkoutSessionSchema>;
 export type NewWorkoutSession = z.infer<typeof NewWorkoutSessionSchema>;
 export type WorkoutHistoryEntry = z.infer<typeof WorkoutHistoryEntrySchema>;
