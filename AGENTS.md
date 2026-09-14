@@ -79,6 +79,10 @@ The videos and images are hidden in `./assets/*`, You can use it
 - Before you end your work make sure every task on your plan is marked as done
 - Before you end your work use `npx tsc --noEmit` and `npm run lint` and makes sure it pass and doesnt make any problems
 
+# Loop
+
+After you say done check the plan which you created for this feature and check the file which you edited, check that everything the plan is covering if its not remember to add it to the feature this. Remember also to check tests which are cover in goal section
+
 # Expo HAS CHANGED
 
 Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
