@@ -8,7 +8,6 @@ import {
   RoutineListSection,
   WorkoutQuickActions,
 } from "@/components/workouts";
-import { PillNavbar } from "@/components/navigation";
 
 export default function WorkoutsScreen() {
   const insets = useSafeAreaInsets();
@@ -60,9 +59,6 @@ export default function WorkoutsScreen() {
           />
         </View>
       </ScrollView>
-
-      {/* Floating Pill Navigation */}
-      <PillNavbar activeTab="workouts" />
     </View>
   );
 }

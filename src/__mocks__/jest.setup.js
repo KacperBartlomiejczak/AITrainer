@@ -16,6 +16,7 @@ MockStack.Screen = MockStackScreen;
 
 const mockRouter = {
   push: jest.fn(),
+  navigate: jest.fn(),
   replace: jest.fn(),
   back: jest.fn(),
   canGoBack: jest.fn(() => true),
@@ -25,6 +26,7 @@ const mockUseLocalSearchParams = jest.fn(() => ({}));
 
 beforeEach(() => {
   mockRouter.push.mockClear();
+  mockRouter.navigate.mockClear();
   mockRouter.replace.mockClear();
   mockRouter.back.mockClear();
   mockRouter.canGoBack.mockReset();

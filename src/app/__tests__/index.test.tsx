@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react-native";
-import HomeScreen from "../index";
+import HomeScreen from "../(tabs)/index";
 import { resetInMemoryDatabase, saveLocalProfile } from "@/db/testing/in-memory-client";
 import { saveFinishedWorkout } from "@/db/testing/workout-fixtures";
 

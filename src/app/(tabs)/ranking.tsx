@@ -11,7 +11,6 @@ import {
   LeagueStandardsModal,
   RankingStandardsView,
 } from "@/components/ranking";
-import { PillNavbar } from "@/components/navigation";
 
 export default function RankingScreen() {
   const insets = useSafeAreaInsets();
@@ -161,9 +160,6 @@ export default function RankingScreen() {
         visible={isStandardsModalOpen}
         onClose={closeStandardsModal}
       />
-
-      {/* Floating Pill Navigation */}
-      <PillNavbar activeTab="ranking" />
     </View>
   );
 }

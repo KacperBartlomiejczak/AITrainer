@@ -2,6 +2,7 @@ import {
   NavTabIdSchema,
   NavItemSchema,
   NavTabListSchema,
+  NavItemLayoutSchema,
   OnboardingRedirectRouteSchema,
   OnboardingGuardInputSchema,
 } from "../navigation.schema";
@@ -10,6 +11,7 @@ describe("navigation.schema", () => {
   it("validates valid nav tab ids", () => {
     expect(NavTabIdSchema.safeParse("home").success).toBe(true);
     expect(NavTabIdSchema.safeParse("workouts").success).toBe(true);
+    expect(NavTabIdSchema.safeParse("ai-mentor").success).toBe(true);
     expect(NavTabIdSchema.safeParse("ranking").success).toBe(true);
     expect(NavTabIdSchema.safeParse("profile").success).toBe(true);
     expect(NavTabIdSchema.safeParse("unknown").success).toBe(false);
@@ -55,6 +57,17 @@ describe("navigation.schema", () => {
 
     // 2 items should fail
     expect(NavTabListSchema.safeParse(threeItems.slice(0, 2)).success).toBe(false);
+  });
+
+  it("validates a measured nav item layout", () => {
+    expect(NavItemLayoutSchema.safeParse({ x: 0, width: 80 }).success).toBe(true);
+    expect(NavItemLayoutSchema.safeParse({ x: 120.5, width: 76.25 }).success).toBe(true);
+  });
+
+  it("rejects a negative x or a non-positive width", () => {
+    expect(NavItemLayoutSchema.safeParse({ x: -1, width: 80 }).success).toBe(false);
+    expect(NavItemLayoutSchema.safeParse({ x: 0, width: 0 }).success).toBe(false);
+    expect(NavItemLayoutSchema.safeParse({ x: 0, width: -10 }).success).toBe(false);
   });
 
   it("accepts only known onboarding redirect routes", () => {

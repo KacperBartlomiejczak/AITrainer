@@ -8,10 +8,11 @@ describe("usePillNavigation", () => {
     const { result, unmount } = await renderHook(() => usePillNavigation());
 
     expect(result.current.activeTab).toBe("home");
-    expect(result.current.tabs).toHaveLength(4);
+    expect(result.current.tabs).toHaveLength(5);
     expect(result.current.tabs.map((t) => t.id)).toEqual([
       "home",
       "workouts",
+      "ai-mentor",
       "ranking",
       "profile",
     ]);
@@ -24,6 +25,15 @@ describe("usePillNavigation", () => {
     const { result, unmount } = await renderHook(() => usePillNavigation());
 
     expect(result.current.activeTab).toBe("workouts");
+
+    unmount();
+  });
+
+  it("detects 'ai-mentor' tab when pathname is '/ai-mentor'", async () => {
+    (usePathname as jest.Mock).mockReturnValue("/ai-mentor");
+    const { result, unmount } = await renderHook(() => usePillNavigation());
+
+    expect(result.current.activeTab).toBe("ai-mentor");
 
     unmount();
   });
@@ -57,29 +67,36 @@ describe("usePillNavigation", () => {
     unmount();
   });
 
-  it("navigates to target tab on navigateToTab call", async () => {
+  it("switches tabs via router.navigate (no history stacking)", async () => {
     const router = useRouter();
     const { result, unmount } = await renderHook(() => usePillNavigation());
 
     await act(async () => {
       result.current.navigateToTab("workouts");
     });
-    expect(router.push).toHaveBeenCalledWith("/workouts");
+    expect(router.navigate).toHaveBeenCalledWith("/workouts");
+
+    await act(async () => {
+      result.current.navigateToTab("ai-mentor");
+    });
+    expect(router.navigate).toHaveBeenCalledWith("/ai-mentor");
 
     await act(async () => {
       result.current.navigateToTab("ranking");
     });
-    expect(router.push).toHaveBeenCalledWith("/ranking");
+    expect(router.navigate).toHaveBeenCalledWith("/ranking");
 
     await act(async () => {
       result.current.navigateToTab("profile");
     });
-    expect(router.push).toHaveBeenCalledWith("/user-profile");
+    expect(router.navigate).toHaveBeenCalledWith("/user-profile");
 
     await act(async () => {
       result.current.navigateToTab("home");
     });
-    expect(router.push).toHaveBeenCalledWith("/");
+    expect(router.navigate).toHaveBeenCalledWith("/");
+
+    expect(router.push).not.toHaveBeenCalled();
 
     unmount();
   });

@@ -9,17 +9,24 @@ import {
 export const DEFAULT_NAV_TABS: NavTabList = [
   {
     id: "home",
-    label: "Start",
+    label: "Home",
     iconName: "Home",
     route: "/",
     testID: "pill-nav-home",
   },
   {
     id: "workouts",
-    label: "Trening",
+    label: "Treningi",
     iconName: "Dumbbell",
     route: "/workouts",
     testID: "pill-nav-workouts",
+  },
+  {
+    id: "ai-mentor",
+    label: "AI mentor",
+    iconName: "Sparkles",
+    route: "/ai-mentor",
+    testID: "pill-nav-ai-mentor",
   },
   {
     id: "ranking",
@@ -30,7 +37,7 @@ export const DEFAULT_NAV_TABS: NavTabList = [
   },
   {
     id: "profile",
-    label: "Profil",
+    label: "Twój profil",
     iconName: "User",
     route: "/user-profile",
     testID: "pill-nav-profile",
@@ -51,6 +58,9 @@ export function usePillNavigation(overrideTab?: NavTabId) {
     if (pathname === "/workouts" || pathname.startsWith("/workout")) {
       return "workouts";
     }
+    if (pathname === "/ai-mentor") {
+      return "ai-mentor";
+    }
     if (pathname === "/ranking") {
       return "ranking";
     }
@@ -64,7 +74,8 @@ export function usePillNavigation(overrideTab?: NavTabId) {
     (tabId: NavTabId) => {
       const target = validatedTabs.find((t) => t.id === tabId);
       if (target) {
-        router.push(target.route as never);
+        // `navigate` (not `push`) switches tabs without growing the Stack history.
+        router.navigate(target.route as never);
       }
     },
     [router, validatedTabs]
