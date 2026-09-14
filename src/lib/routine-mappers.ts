@@ -1,9 +1,12 @@
 import { ROUTINE_LEVEL_LABELS, type RoutineItem } from "@/schemas/routine.schema";
+import type { RoutineDraft } from "@/schemas/routine-form.schema";
 import type { UserRoutineCard } from "@/schemas/user-profile-screen.schema";
 import type { WorkoutDetail } from "@/schemas/workout-session.schema";
-import type { NewWorkoutSession, Routine } from "@/schemas/workout-history.schema";
+import type { NewUserRoutine, NewWorkoutSession, Routine } from "@/schemas/workout-history.schema";
 
-/** Stored routines → view models, and a finished routine → a new workout session. */
+/** Stored routines → view models, a finished routine → a new workout session, and a draft → a routine to save. */
+
+type CreateId = (prefix: string) => string;
 
 function uniqueTargetMuscles(routine: Routine): string[] {
   return [...new Set(routine.exercises.map((exercise) => exercise.targetMuscle))];
@@ -32,6 +35,7 @@ export function toRoutineItem(routine: Routine): RoutineItem {
     targetMuscleGroups: uniqueTargetMuscles(routine),
     exerciseCount: routine.exercises.length,
     isPopular: false,
+    isUserCreated: routine.userId !== null,
   };
 }
 
@@ -51,6 +55,26 @@ export function toWorkoutDetail(routine: Routine): WorkoutDetail {
       targetReps: exercise.targetReps,
       restSeconds: exercise.restSeconds,
       completed: false,
+    })),
+  };
+}
+
+/** Candidate for `NewUserRoutineSchema` — the caller validates it. */
+export function buildRoutineFromDraft(draft: RoutineDraft, createId: CreateId): NewUserRoutine {
+  return {
+    id: createId("rtn"),
+    title: draft.title,
+    description: draft.description,
+    level: draft.level,
+    daysPerWeek: draft.daysPerWeek,
+    durationMinutes: draft.durationMinutes,
+    exercises: draft.exercises.map((exercise) => ({
+      id: createId("rtx"),
+      name: exercise.name,
+      targetMuscle: exercise.targetMuscle,
+      sets: exercise.sets,
+      targetReps: exercise.targetReps,
+      restSeconds: exercise.restSeconds,
     })),
   };
 }

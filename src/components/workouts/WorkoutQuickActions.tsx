@@ -6,9 +6,10 @@ interface WorkoutQuickActionsProps {
   /** An empty workout is already running → the button resumes it */
   hasActiveWorkout: boolean;
   onStartEmptyWorkout: () => void;
+  onCreateRoutine: () => void;
 }
 
-export function WorkoutQuickActions({ hasActiveWorkout, onStartEmptyWorkout }: WorkoutQuickActionsProps) {
+export function WorkoutQuickActions({ hasActiveWorkout, onStartEmptyWorkout, onCreateRoutine }: WorkoutQuickActionsProps) {
   return (
     <View className="flex-row gap-2.5">
       <Pressable
@@ -23,11 +24,10 @@ export function WorkoutQuickActions({ hasActiveWorkout, onStartEmptyWorkout }: W
         </Text>
       </Pressable>
 
-      {/* Creating routines is not implemented yet — the button is intentionally a no-op */}
       <Pressable
         testID="create-routine-button"
+        onPress={onCreateRoutine}
         accessibilityRole="button"
-        accessibilityHint="Wkrótce"
         className="flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[#121214] border border-[#27272A] px-3 py-4 active:bg-[#1E1E22]"
       >
         <ListPlus size={18} color="#FFFFFF" />

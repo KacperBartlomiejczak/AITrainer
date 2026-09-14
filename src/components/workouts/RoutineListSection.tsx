@@ -6,11 +6,13 @@ import type { RoutineItem } from "@/schemas/routine.schema";
 interface RoutineListSectionProps {
   routines: RoutineItem[];
   onStartRoutine: (id: string) => void;
+  onDeleteRoutine: (id: string) => void;
 }
 
 export function RoutineListSection({
   routines,
   onStartRoutine,
+  onDeleteRoutine,
 }: RoutineListSectionProps) {
   return (
     <View className="flex-col gap-3.5">
@@ -29,6 +31,7 @@ export function RoutineListSection({
             key={routine.id}
             routine={routine}
             onStart={onStartRoutine}
+            onDelete={onDeleteRoutine}
           />
         ))}
       </View>

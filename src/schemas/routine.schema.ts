@@ -12,6 +12,8 @@ export const RoutineItemSchema = z.object({
   targetMuscleGroups: z.array(z.string().min(1)).min(1),
   exerciseCount: z.number().int().positive(),
   isPopular: z.boolean().optional().default(false),
+  /** Only routines the user created themselves may be deleted — built-in routines never are. */
+  isUserCreated: z.boolean().optional().default(false),
 });
 
 export const RoutineListSchema = z.array(RoutineItemSchema);

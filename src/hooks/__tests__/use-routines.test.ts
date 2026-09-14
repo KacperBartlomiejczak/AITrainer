@@ -1,8 +1,22 @@
 import { renderHook, act, waitFor } from "@testing-library/react-native";
 import { useRoutines } from "../use-routines";
 import { useRouter } from "expo-router";
-import { resetInMemoryDatabase } from "@/db/testing/in-memory-client";
+import { resetInMemoryDatabase, saveLocalProfile } from "@/db/testing/in-memory-client";
+import { createRoutine } from "@/db/workout-history";
 import { useLiveWorkoutStore } from "@/stores/live-workout.store";
+import type { NewUserRoutine } from "@/schemas/workout-history.schema";
+
+jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
+
+const userRoutine: NewUserRoutine = {
+  id: "rtn_user_test",
+  title: "Moja rutyna",
+  description: "Testowa rutyna użytkownika",
+  level: "beginner",
+  daysPerWeek: 2,
+  durationMinutes: 30,
+  exercises: [{ id: "rtx_1", name: "Pompki", targetMuscle: "Klatka", sets: 3, targetReps: "10", restSeconds: 60 }],
+};
 
 jest.mock("@/db/client", () => jest.requireActual("@/db/testing/in-memory-client"));
 
@@ -83,6 +97,33 @@ describe("useRoutines", () => {
     });
     expect(result.current.hasActiveEmptyWorkout).toBe(true);
     useLiveWorkoutStore.getState().discardWorkout();
+    unmount();
+  });
+
+  it("deletes a user-created routine and reloads the list", async () => {
+    await saveLocalProfile();
+    await createRoutine(userRoutine);
+    const { result, unmount } = await renderHook(() => useRoutines());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.routines.map((routine) => routine.id)).toContain("rtn_user_test");
+
+    await act(async () => {
+      await result.current.deleteRoutine("rtn_user_test");
+    });
+
+    expect(result.current.routines.map((routine) => routine.id)).not.toContain("rtn_user_test");
+    unmount();
+  });
+
+  it("never deletes a built-in routine", async () => {
+    const { result, unmount } = await renderHook(() => useRoutines());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.deleteRoutine("rtn_fbw_a");
+    });
+
+    expect(result.current.routines.map((routine) => routine.id)).toContain("rtn_fbw_a");
     unmount();
   });
 });

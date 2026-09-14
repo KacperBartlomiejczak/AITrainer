@@ -42,6 +42,21 @@ describe("routine.schema", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("defaults isUserCreated to false but accepts an explicit true", () => {
+    const base = {
+      id: "rtn_fbw_01",
+      title: "FBW dla Początkujących",
+      description: "Idealny plan na start.",
+      durationMinutes: 45,
+      daysPerWeek: 3,
+      level: "beginner" as const,
+      targetMuscleGroups: ["Klatka"],
+      exerciseCount: 5,
+    };
+    expect(RoutineItemSchema.parse(base).isUserCreated).toBe(false);
+    expect(RoutineItemSchema.parse({ ...base, isUserCreated: true }).isUserCreated).toBe(true);
+  });
+
   it("validates routine list array", () => {
     const list = [
       {

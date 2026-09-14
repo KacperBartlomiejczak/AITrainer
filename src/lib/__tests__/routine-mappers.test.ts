@@ -1,13 +1,15 @@
 import {
   buildNewWorkoutSession,
+  buildRoutineFromDraft,
   toRoutineItem,
   toUserRoutineCard,
   toWorkoutDetail,
 } from "../routine-mappers";
 import { RoutineItemSchema } from "@/schemas/routine.schema";
+import type { RoutineDraft } from "@/schemas/routine-form.schema";
 import { UserRoutineCardSchema } from "@/schemas/user-profile-screen.schema";
 import { WorkoutDetailSchema } from "@/schemas/workout-session.schema";
-import { NewWorkoutSessionSchema, type Routine } from "@/schemas/workout-history.schema";
+import { NewUserRoutineSchema, NewWorkoutSessionSchema, type Routine } from "@/schemas/workout-history.schema";
 
 const routine: Routine = {
   id: "rtn_fbw_a",
@@ -46,6 +48,12 @@ describe("routine mappers", () => {
     const item = toRoutineItem(routine);
     expect(RoutineItemSchema.safeParse(item).success).toBe(true);
     expect(item.exerciseCount).toBe(3);
+    expect(item.isUserCreated).toBe(false);
+  });
+
+  it("marks a user-owned routine as user-created", () => {
+    const item = toRoutineItem({ ...routine, userId: "local" });
+    expect(item.isUserCreated).toBe(true);
   });
 
   it("maps a routine to the workout detail screen model", () => {
@@ -76,6 +84,54 @@ describe("buildNewWorkoutSession", () => {
         { name: "Przysiad", targetMuscle: "Nogi", sets: 3, targetReps: "8-10", completed: true },
         { name: "Wykroki", targetMuscle: "Nogi", sets: 3, targetReps: "10", completed: false },
         { name: "Pompki", targetMuscle: "Klatka", sets: 3, targetReps: "10", completed: true },
+      ],
+    });
+  });
+});
+
+describe("buildRoutineFromDraft", () => {
+  const draft: RoutineDraft = {
+    title: "Push day",
+    description: "Klatka, barki, triceps",
+    level: "intermediate",
+    daysPerWeek: 3,
+    durationMinutes: 45,
+    exercises: [
+      {
+        id: "row_1",
+        catalogExerciseId: "0025",
+        name: "Wyciskanie sztangi na ławce poziomej",
+        targetMuscle: "Klatka piersiowa",
+        sets: 4,
+        targetReps: "8-10",
+        restSeconds: 90,
+      },
+    ],
+  };
+
+  it("builds a valid new user routine, generating fresh ids and dropping the catalog id", () => {
+    let counter = 0;
+    const createId = (prefix: string) => `${prefix}_${++counter}`;
+
+    const routine = buildRoutineFromDraft(draft, createId);
+
+    expect(NewUserRoutineSchema.safeParse(routine).success).toBe(true);
+    expect(routine).toEqual({
+      id: "rtn_1",
+      title: "Push day",
+      description: "Klatka, barki, triceps",
+      level: "intermediate",
+      daysPerWeek: 3,
+      durationMinutes: 45,
+      exercises: [
+        {
+          id: "rtx_2",
+          name: "Wyciskanie sztangi na ławce poziomej",
+          targetMuscle: "Klatka piersiowa",
+          sets: 4,
+          targetReps: "8-10",
+          restSeconds: 90,
+        },
       ],
     });
   });

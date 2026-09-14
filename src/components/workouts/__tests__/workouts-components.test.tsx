@@ -1,4 +1,5 @@
 import React from "react";
+import { Alert } from "react-native";
 import { render, fireEvent, act } from "@testing-library/react-native";
 import { ExercisesHeroBanner } from "../ExercisesHeroBanner";
 import { RoutineCard } from "../RoutineCard";
@@ -16,6 +17,7 @@ const MOCK_ROUTINE: RoutineItem = {
   targetMuscleGroups: ["Klatka", "Plecy"],
   exerciseCount: 5,
   isPopular: true,
+  isUserCreated: false,
 };
 
 describe("Workouts Components", () => {
@@ -56,6 +58,44 @@ describe("Workouts Components", () => {
     unmount();
   });
 
+  it("ignores long-press on a built-in routine (no delete affordance)", async () => {
+    const onDelete = jest.fn();
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => undefined);
+    const { getByTestId, unmount } = await render(
+      <RoutineCard routine={MOCK_ROUTINE} onStart={jest.fn()} onDelete={onDelete} />,
+    );
+
+    await act(async () => fireEvent(getByTestId("routine-card-rtn_test_1"), "longPress"));
+
+    expect(alertSpy).not.toHaveBeenCalled();
+    expect(onDelete).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
+    unmount();
+  });
+
+  it("asks for confirmation and deletes a user-created routine on long-press", async () => {
+    const onDelete = jest.fn();
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation((_title, _message, buttons) => {
+      const destructive = buttons?.find((button) => button.style === "destructive");
+      destructive?.onPress?.();
+    });
+    const userRoutine = { ...MOCK_ROUTINE, isUserCreated: true };
+    const { getByTestId, unmount } = await render(
+      <RoutineCard routine={userRoutine} onStart={jest.fn()} onDelete={onDelete} />,
+    );
+
+    await act(async () => fireEvent(getByTestId("routine-card-rtn_test_1"), "longPress"));
+
+    expect(alertSpy).toHaveBeenCalledWith(
+      "Usuń rutynę",
+      expect.stringContaining(MOCK_ROUTINE.title),
+      expect.any(Array),
+    );
+    expect(onDelete).toHaveBeenCalledWith("rtn_test_1");
+    alertSpy.mockRestore();
+    unmount();
+  });
+
   it("renders RoutineListSection with multiple cards", async () => {
     const onStartMock = jest.fn();
     const routines: RoutineItem[] = [
@@ -68,7 +108,7 @@ describe("Workouts Components", () => {
     ];
 
     const { getByText, getByTestId, unmount } = await render(
-      <RoutineListSection routines={routines} onStartRoutine={onStartMock} />
+      <RoutineListSection routines={routines} onStartRoutine={onStartMock} onDeleteRoutine={jest.fn()} />
     );
 
     expect(getByText("Gotowe Rutyny Treningowe")).toBeTruthy();
@@ -80,10 +120,15 @@ describe("Workouts Components", () => {
 });
 
 describe("WorkoutQuickActions", () => {
-  it("starts an empty workout and shows 'create routine' without any action yet", async () => {
+  it("starts an empty workout and opens the create-routine screen", async () => {
     const onStartEmptyWorkout = jest.fn();
+    const onCreateRoutine = jest.fn();
     const { getByTestId, getByText, unmount } = await render(
-      <WorkoutQuickActions hasActiveWorkout={false} onStartEmptyWorkout={onStartEmptyWorkout} />,
+      <WorkoutQuickActions
+        hasActiveWorkout={false}
+        onStartEmptyWorkout={onStartEmptyWorkout}
+        onCreateRoutine={onCreateRoutine}
+      />,
     );
 
     expect(getByText("Rozpocznij pusty trening")).toBeTruthy();
@@ -93,12 +138,13 @@ describe("WorkoutQuickActions", () => {
       fireEvent.press(getByTestId("create-routine-button"));
     });
     expect(onStartEmptyWorkout).toHaveBeenCalledTimes(1);
+    expect(onCreateRoutine).toHaveBeenCalledTimes(1);
     unmount();
   });
 
   it("offers to resume a running empty workout", async () => {
     const { getByText, unmount } = await render(
-      <WorkoutQuickActions hasActiveWorkout onStartEmptyWorkout={jest.fn()} />,
+      <WorkoutQuickActions hasActiveWorkout onStartEmptyWorkout={jest.fn()} onCreateRoutine={jest.fn()} />,
     );
     expect(getByText("Wróć do treningu")).toBeTruthy();
     unmount();

@@ -8,6 +8,7 @@ import type {
   NewUserRoutine,
   NewWorkoutSession,
   Routine,
+  RoutineId,
   WorkoutHistoryEntry,
   WorkoutSession,
   WorkoutSessionExport,
@@ -22,6 +23,15 @@ import { openRoutineRepository, openWorkoutSessionRepository } from "./client";
 
 export async function loadRoutines(): Promise<Routine[]> {
   return (await openRoutineRepository()).list();
+}
+
+export async function createRoutine(routine: NewUserRoutine): Promise<Routine> {
+  return (await openRoutineRepository()).create(routine);
+}
+
+/** Built-in routines are silently kept; returns whether a routine was actually removed. */
+export async function deleteRoutine(id: RoutineId): Promise<boolean> {
+  return (await openRoutineRepository()).delete(id);
 }
 
 export async function loadWorkoutHistory(): Promise<WorkoutHistoryEntry[]> {

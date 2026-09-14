@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Pressable } from "react-native";
+import { Alert, View, Text, Pressable } from "react-native";
 import { Clock, Calendar, Flame, ChevronRight } from "lucide-react-native";
 import { Badge } from "@/components/ui/badge";
 import type { RoutineItem, RoutineLevel } from "@/schemas/routine.schema";
@@ -7,6 +7,8 @@ import type { RoutineItem, RoutineLevel } from "@/schemas/routine.schema";
 interface RoutineCardProps {
   routine: RoutineItem;
   onStart: (id: string) => void;
+  /** Only asked for a user-created routine — built-in routines never offer to delete. */
+  onDelete?: (id: string) => void;
 }
 
 const LEVEL_LABELS: Record<RoutineLevel, string> = {
@@ -15,9 +17,28 @@ const LEVEL_LABELS: Record<RoutineLevel, string> = {
   advanced: "Zaawansowany",
 };
 
-export function RoutineCard({ routine, onStart }: RoutineCardProps) {
+export function RoutineCard({ routine, onStart, onDelete }: RoutineCardProps) {
+  const canDelete = routine.isUserCreated && onDelete !== undefined;
+
+  const handleLongPress = () => {
+    if (!canDelete) return;
+    Alert.alert(
+      "Usuń rutynę",
+      `Czy na pewno chcesz usunąć „${routine.title}”? Tej operacji nie można cofnąć.`,
+      [
+        { text: "Anuluj", style: "cancel" },
+        { text: "Usuń", style: "destructive", onPress: () => onDelete?.(routine.id) },
+      ],
+    );
+  };
+
   return (
-    <View className="rounded-2xl bg-[#121214] border border-[#27272A] p-4 flex-col gap-3">
+    <Pressable
+      testID={`routine-card-${routine.id}`}
+      onLongPress={handleLongPress}
+      accessibilityHint={canDelete ? "Przytrzymaj, aby usunąć rutynę" : undefined}
+      className="rounded-2xl bg-[#121214] border border-[#27272A] p-4 flex-col gap-3"
+    >
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
           <Badge variant="default" size="sm" className="bg-[#1E1E22] border-[#27272A]">
@@ -79,6 +100,6 @@ export function RoutineCard({ routine, onStart }: RoutineCardProps) {
           <ChevronRight size={13} color="#007AFF" />
         </Pressable>
       </View>
-    </View>
+    </Pressable>
   );
 }

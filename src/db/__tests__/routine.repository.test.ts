@@ -123,6 +123,39 @@ describe("createRoutineRepository", () => {
     await expect(repository.list()).resolves.toEqual([]);
   });
 
+  it("deletes a routine owned by the user, cascading its exercises", async () => {
+    await createOnboardingRepository(testDb.db, { now }).save({
+      name: "Kacper",
+      experienceLevel: "beginner",
+      fitnessGoal: "strength",
+      muscleFocus: { mode: "undecided" },
+    });
+    const repository = createRoutineRepository(testDb.db, { now });
+    const definition = NewUserRoutineSchema.parse(customRoutine);
+    await repository.create(definition);
+
+    await expect(repository.delete("rtn_custom")).resolves.toBe(true);
+    await expect(repository.getById("rtn_custom")).resolves.toBeNull();
+    const { count } = testDb.sqlite.prepare("SELECT COUNT(*) AS count FROM routine_exercises WHERE routine_id = ?").get("rtn_custom") as {
+      count: number;
+    };
+    expect(count).toBe(0);
+  });
+
+  it("never deletes a built-in routine", async () => {
+    const repository = createRoutineRepository(testDb.db, { now });
+    await repository.seed(BUILTIN_ROUTINES);
+    const builtinId = BUILTIN_ROUTINES[0]!.id;
+
+    await expect(repository.delete(builtinId)).resolves.toBe(false);
+    await expect(repository.getById(builtinId)).resolves.not.toBeNull();
+  });
+
+  it("no-ops when deleting an unknown routine id", async () => {
+    const repository = createRoutineRepository(testDb.db, { now });
+    await expect(repository.delete("missing")).resolves.toBe(false);
+  });
+
   it("skips corrupted routine rows instead of crashing", async () => {
     const repository = createRoutineRepository(testDb.db, { now });
     await repository.seed(BUILTIN_ROUTINES);

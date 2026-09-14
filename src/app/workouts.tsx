@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoutines } from "@/hooks/use-routines";
 import {
@@ -11,8 +12,15 @@ import { PillNavbar } from "@/components/navigation";
 
 export default function WorkoutsScreen() {
   const insets = useSafeAreaInsets();
-  const { filteredRoutines, startRoutine, hasActiveEmptyWorkout, startEmptyWorkout, openAllExercises } =
-    useRoutines();
+  const router = useRouter();
+  const {
+    filteredRoutines,
+    startRoutine,
+    hasActiveEmptyWorkout,
+    startEmptyWorkout,
+    openAllExercises,
+    deleteRoutine,
+  } = useRoutines();
 
   return (
     <View className="flex-1 bg-black">
@@ -38,6 +46,7 @@ export default function WorkoutsScreen() {
           <WorkoutQuickActions
             hasActiveWorkout={hasActiveEmptyWorkout}
             onStartEmptyWorkout={startEmptyWorkout}
+            onCreateRoutine={() => router.push("/routine/new" as never)}
           />
 
           {/* Hero Banner with "Pokaż wszystkie ćwiczenia" button */}
@@ -47,6 +56,7 @@ export default function WorkoutsScreen() {
           <RoutineListSection
             routines={filteredRoutines}
             onStartRoutine={startRoutine}
+            onDeleteRoutine={deleteRoutine}
           />
         </View>
       </ScrollView>

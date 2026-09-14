@@ -1,5 +1,7 @@
 import {
   attachPhotoToWorkout,
+  createRoutine,
+  deleteRoutine,
   deleteWorkoutHistory,
   exportWorkoutSessions,
   loadExerciseProgress,
@@ -169,6 +171,17 @@ describe("workout history service", () => {
     const [exported] = await exportWorkoutSessions();
     expect(exported).toMatchObject({ id, hasPhoto: true, startedAt: "2026-09-13T17:00:00.000Z" });
     expect(JSON.stringify(exported)).not.toContain("file://");
+  });
+
+  it("creates a user routine and lets the user delete it, but never a built-in one", async () => {
+    const created = await createRoutine(routineFromWorkout);
+    expect((await loadRoutines()).map((routine) => routine.id)).toContain(created.id);
+
+    await expect(deleteRoutine(created.id)).resolves.toBe(true);
+    expect((await loadRoutines()).map((routine) => routine.id)).not.toContain(created.id);
+
+    const [builtin] = await loadRoutines();
+    await expect(deleteRoutine(builtin!.id)).resolves.toBe(false);
   });
 
   it("deletes the whole history and every photo file", async () => {
